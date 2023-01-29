@@ -41,6 +41,8 @@ router.get("/:postId/comments", async (req: Request, res: Response) => {
     sortDirection as string
   );
 
+  console.log(result, "result");
+
   if (result.items.length > 0) {
     res.send({
       ...result,
@@ -70,7 +72,15 @@ router.post(
     );
 
     if (result) {
-      res.status(201).send(result);
+      res.status(201).send({
+        id: result.id,
+        content: result.content,
+        commentatorInfo: {
+          userId: result.userId,
+          userLogin: result.userLogin,
+        },
+        createdAt: result.createdAt,
+      });
     } else {
       res.sendStatus(404);
     }
