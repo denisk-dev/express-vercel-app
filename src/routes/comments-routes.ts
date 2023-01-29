@@ -75,7 +75,17 @@ router.delete(
   async (req: Request, res: Response) => {
     const { commentId } = req.params;
 
-    // const { user } = req.context;
+    const { user } = req.context;
+
+    const post = await queryRepo.getCommentById(commentId);
+
+    if (!post) {
+      return res.sendStatus(404);
+    }
+
+    if (user.id !== post?.comments?.[0].userId) {
+      return res.sendStatus(403);
+    }
 
     const comment = await queryRepo.getCommentById(commentId);
 
