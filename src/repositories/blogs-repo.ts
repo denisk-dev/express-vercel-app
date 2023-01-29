@@ -132,7 +132,7 @@ export const blogsDataAccessLayer = {
     // });
 
     const allValues = await postsCollection
-      .find({ blogId }, { sort, skip, projection: { _id: 0 } })
+      .find({ blogId }, { sort, skip, projection: { _id: 0, comments: 0 } })
       .limit(pageSize)
       .toArray();
 

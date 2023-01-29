@@ -22,7 +22,15 @@ router.get("/:id", async (req: Request, res: Response) => {
 
   const comments = result?.comments?.[0];
 
-  return res.send(comments);
+  return res.send({
+    id: comments.id,
+    content: comments.content,
+    commentatorInfo: {
+      userId: comments.userId,
+      userLogin: comments.userLogin,
+    },
+    createdAt: comments.createdAt,
+  });
 });
 
 router.put(

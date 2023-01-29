@@ -125,7 +125,7 @@ export const queryRepo = {
     const totalCountArr = await postsCollection.aggregate([
       {
         $match: {
-          id: "68fe08ff-7030-4b1e-bbe7-91e3e6b24d2d",
+          id: postId,
         },
       },
       {
@@ -165,6 +165,8 @@ export const queryRepo = {
     ]);
 
     const totalCount = await totalCountArr.toArray();
+
+    console.log(totalCount, "totalCount");
 
     // return result.toArray();
     const result = await resultArr.toArray();
