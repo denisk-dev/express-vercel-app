@@ -41,8 +41,6 @@ router.get("/:postId/comments", async (req: Request, res: Response) => {
     sortDirection as string
   );
 
-  console.log(result, "result");
-
   if (result.items.length > 0) {
     res.send({
       ...result,

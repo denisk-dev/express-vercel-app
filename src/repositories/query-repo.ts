@@ -154,19 +154,19 @@ export const queryRepo = {
         },
       },
       {
+        $sort: sort,
+      },
+      {
         $skip: skip,
       },
       {
         $limit: pageSize,
       },
-      {
-        $sort: sort,
-      },
     ]);
 
     const totalCount = await totalCountArr.toArray();
 
-    console.log(totalCount, "totalCount");
+    // console.log(totalCount, "totalCount");
 
     // return result.toArray();
     const result = await resultArr.toArray();
