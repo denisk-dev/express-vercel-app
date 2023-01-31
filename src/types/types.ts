@@ -1,3 +1,5 @@
+import { ObjectId } from "mongodb";
+
 export type Blogs = {
   id: string;
   name: string;
@@ -39,6 +41,7 @@ export type Posts = {
 };
 
 export interface TAddUser {
+  _id?: ObjectId;
   accountData: {
     userName: string;
     email: string;

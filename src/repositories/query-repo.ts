@@ -67,8 +67,8 @@ export const queryRepo = {
   async getUserByMongoId(mongoId: ObjectId) {
     try {
       return await usersCollection.findOne(
-        { _id: mongoId },
-        { projection: { _id: 0 } }
+        { _id: mongoId }
+        // { projection: { _id: 0 } }
       );
     } catch (error) {
       console.log(error);

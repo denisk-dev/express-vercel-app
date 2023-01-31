@@ -31,10 +31,12 @@ router.post(
 );
 
 router.get("/me", [auth], (req: Request, res: Response) => {
-  // eslint-disable-next-line @typescript-eslint/no-shadow
-  const { email, login, id } = req.context.user;
+  // eslint-disable-next-line @typescript-eslint/no-shadow, @typescript-eslint/naming-convention
+  const { accountData, _id } = req.context.user;
 
-  res.send({ email, login, userId: id });
+  const { email, userName } = accountData;
+
+  res.send({ email, login: userName, userId: _id });
 });
 
 router.post(
@@ -67,6 +69,7 @@ router.post(
   "/registration",
   [...validateRegistration, sendErrorsIfThereAreAny],
   async (req: Request, res: Response) => {
+    // eslint-disable-next-line @typescript-eslint/no-shadow
     const { login, password, email } = req.body;
 
     const isExistingUser = await authBusinessLogicLayer.registration(
@@ -80,7 +83,7 @@ router.post(
         errorsMessages: [
           {
             message: "User exists",
-            field: "login or email",
+            field: "email",
           },
         ],
       });

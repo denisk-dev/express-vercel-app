@@ -1,9 +1,9 @@
-import { TUsers } from "./src/types/types";
+import { TAddUser } from "./src/types/types";
 
 declare global {
   declare namespace Express {
     export interface Request {
-      context: { user: TUsers };
+      context: { user: TAddUser };
     }
   }
 }

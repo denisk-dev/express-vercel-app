@@ -31,6 +31,8 @@ export const auth = async (req: Request, res: Response, next: NextFunction) => {
     ? await queryRepo.getUserByMongoId(new ObjectId(userId))
     : null;
 
+  console.log(user, "user");
+
   if (user) {
     req.context = { user };
     return next();

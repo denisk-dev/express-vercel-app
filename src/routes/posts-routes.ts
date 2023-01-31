@@ -1,3 +1,4 @@
+/* eslint-disable no-underscore-dangle */
 import { Router, Request, Response } from "express";
 import { auth } from "../middlewares/auth";
 import { auth as authBasic } from "../middlewares/auth-basic";
@@ -62,15 +63,19 @@ router.post(
 
     const { user } = req.context;
 
+    if (!user._id) {
+      return res.sendStatus(404);
+    }
+
     const result = await postsBusinessLogicLayer.createNewComment(
       postId,
       content,
-      user.id,
-      user.login
+      user._id?.toString(),
+      user.accountData.userName
     );
 
     if (result) {
-      res.status(201).send({
+      return res.status(201).send({
         id: result.id,
         content: result.content,
         commentatorInfo: {
@@ -79,9 +84,9 @@ router.post(
         },
         createdAt: result.createdAt,
       });
-    } else {
-      res.sendStatus(404);
     }
+
+    return res.sendStatus(404);
   }
 );
 
