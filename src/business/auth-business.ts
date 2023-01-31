@@ -29,10 +29,16 @@ export const authBusinessLogicLayer = {
   },
 
   async registration(email: string, password: string, login: string) {
-    const userExists = await queryRepo.findUserByLoginOrEmail(login, email);
+    const userByLoginExists = await queryRepo.findUser(login);
 
-    if (userExists) {
-      return false;
+    const userByEmailExists = await queryRepo.findUser(email);
+
+    if (userByLoginExists) {
+      return { isSuccessful: false, type: "login" };
+    }
+
+    if (userByEmailExists) {
+      return { isSuccessful: false, type: "email" };
     }
 
     const passwordHash = await bcrypt.hash(password, 13);
@@ -51,7 +57,7 @@ export const authBusinessLogicLayer = {
       },
     };
 
-    const createdResult = await usersDataAccessLayer.addUser(user);
+    await usersDataAccessLayer.addUser(user);
 
     try {
       await emailManager.sendRecoveryMessage(user);
@@ -61,7 +67,7 @@ export const authBusinessLogicLayer = {
       return null;
     }
 
-    return createdResult;
+    return { isSuccessful: true };
   },
 
   async registrationConfirmation(code: string) {

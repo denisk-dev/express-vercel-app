@@ -72,18 +72,18 @@ router.post(
     // eslint-disable-next-line @typescript-eslint/no-shadow
     const { login, password, email } = req.body;
 
-    const isExistingUser = await authBusinessLogicLayer.registration(
+    const result = await authBusinessLogicLayer.registration(
       email,
       password,
       login
     );
 
-    if (!isExistingUser) {
+    if (!result?.isSuccessful) {
       return res.status(400).send({
         errorsMessages: [
           {
             message: "User exists",
-            field: "email",
+            field: result?.type,
           },
         ],
       });
