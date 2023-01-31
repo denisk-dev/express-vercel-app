@@ -111,3 +111,31 @@ export const commentContentValidation = body("content")
   .isString()
   .trim()
   .isLength({ min: 20, max: 300 });
+
+export const validateRegistrationCode = body("code")
+  .isString()
+  .trim()
+  .not()
+  .isEmpty();
+
+export const validateEmailOnly = body("email")
+  .isEmail()
+  .trim()
+  .not()
+  .isEmpty()
+  .matches(/^[\w-\\.]+@([\w-]+\.)+[\w-]{2,4}$/);
+
+export const validateRegistration = [
+  body("login")
+    .isString()
+    .trim()
+    .isLength({ min: 3, max: 10 })
+    .matches(/^[a-zA-Z0-9_-]*$/),
+  body("password").isString().trim().isLength({ min: 6, max: 20 }),
+  body("email")
+    .isEmail()
+    .trim()
+    .not()
+    .isEmpty()
+    .matches(/^[\w-\\.]+@([\w-]+\.)+[\w-]{2,4}$/),
+];

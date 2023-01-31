@@ -15,7 +15,7 @@ import { usersCollection, postsCollection } from "../db/db";
 // find a way to return the length of find, without doing the toArray() is it possible?
 // just to improve the performance.
 
-//TODO make sure Repository (READ) operators are done in the Presentation layer
+// TODO make sure Repository (READ) operators are done in the Presentation layer
 
 export const queryRepo = {
   async getUsers(
@@ -27,11 +27,11 @@ export const queryRepo = {
     pageSize: number
   ) {
     const searchLogin = searchLoginTerm
-      ? { login: { $regex: searchLoginTerm, $options: "i" } }
+      ? { "accountData.userName": { $regex: searchLoginTerm, $options: "i" } }
       : {};
 
     const searchEmail = searchEmailTerm
-      ? { email: { $regex: searchEmailTerm, $options: "i" } }
+      ? { "accountData.email": { $regex: searchEmailTerm, $options: "i" } }
       : {};
 
     const sort: any = {};
@@ -48,10 +48,11 @@ export const queryRepo = {
     const allValues = await cursor.toArray();
 
     const mappedValues = allValues.map((val) => ({
-      login: val?.login,
-      email: val?.email,
-      createdAt: val?.createdAt,
-      id: val?.id,
+      login: val?.accountData.userName,
+      email: val?.accountData.email,
+      createdAt: val?.accountData.createdAt,
+      // eslint-disable-next-line no-underscore-dangle
+      id: val?._id,
     }));
 
     const allValuesCount = await usersCollection.countDocuments({
@@ -78,7 +79,10 @@ export const queryRepo = {
   async findUser(loginOrEmail: string) {
     try {
       return await usersCollection.findOne({
-        $or: [{ login: loginOrEmail }, { email: loginOrEmail }],
+        $or: [
+          { "accountData.userName": loginOrEmail },
+          { "accountData.email": loginOrEmail },
+        ],
       });
     } catch (error) {
       console.log(error);
@@ -88,8 +92,10 @@ export const queryRepo = {
   async findUserByLoginOrEmail(login: string, email: string) {
     try {
       return await usersCollection.findOne({
-        login,
-        email,
+        $or: [
+          { "accountData.userName": login },
+          { "accountData.email": email },
+        ],
       });
     } catch (error) {
       console.log(error);
@@ -199,6 +205,17 @@ export const queryRepo = {
         },
         { projection: { comments: { $elemMatch: { id } } } }
       );
+    } catch (error) {
+      console.log(error);
+      return null;
+    }
+  },
+
+  async findUserByConfirmationCode(code: string) {
+    try {
+      return await usersCollection.findOne({
+        "emailConfirmation.confirmationCode": code,
+      });
     } catch (error) {
       console.log(error);
       return null;

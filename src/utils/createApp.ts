@@ -14,10 +14,6 @@ const createServer = () => {
 
   app.use(bodyParser.json());
 
-  app.get("/test", (req, res) => {
-    res.send({ test: "hello world" });
-  });
-
   app.use("/blogs", blogs);
   app.use("/posts", posts);
   app.use("/users", users);

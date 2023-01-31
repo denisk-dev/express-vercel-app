@@ -38,10 +38,16 @@ export type Posts = {
   comments: Array<Comments>;
 };
 
-export type TUsers = {
-  login: string;
-  password: string;
-  email: string;
-  createdAt: Date;
-  id: string;
-};
+export interface TAddUser {
+  accountData: {
+    userName: string;
+    email: string;
+    passwordHash: string;
+    createdAt: Date;
+  };
+  emailConfirmation: {
+    confirmationCode: string;
+    expirationDate: Date;
+    isConfirmed: boolean;
+  };
+}

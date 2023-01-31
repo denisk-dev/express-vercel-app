@@ -1,5 +1,5 @@
 import { MongoClient } from "mongodb";
-import { Blogs, Posts, TUsers } from "../types/types";
+import { Blogs, Posts, TAddUser } from "../types/types";
 
 //TODO maybe connect to my DB on the localhost????
 
@@ -15,7 +15,7 @@ const db = client.db("samurai_three");
 // TODO add types
 export const postsCollection = db.collection<Posts>("posts");
 export const blogsCollection = db.collection<Blogs>("blogs");
-export const usersCollection = db.collection<TUsers>("users");
+export const usersCollection = db.collection<TAddUser>("users");
 
 export async function runDb() {
   try {

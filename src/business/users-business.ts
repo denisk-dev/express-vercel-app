@@ -6,8 +6,6 @@ import { queryRepo } from "../repositories/query-repo";
 // CUD only
 export const usersBusinessLogicLayer = {
   async addNewUser(login: string, password: string, email: string) {
-    // TODO I NEED TO HASH PASSWORD!!!!!!!
-
     const user = await queryRepo.findUserByLoginOrEmail(login, email);
 
     if (user) {
@@ -17,19 +15,20 @@ export const usersBusinessLogicLayer = {
     // Dymich creates separate function
     const hash = await bcrypt.hash(password, 13);
 
-    // TODO some more research (using Dymich way implement hashing and salt of password)
-    // const passwordHash = await generateHash(password, salt);
-
-    const id = uuidv4();
-
     // TODO I think I need to create a way to check if the same login/email doesn't exist
-    const result = await usersDataAccessLayer.addUser(
-      login,
-      hash,
-      email,
-      new Date(),
-      id
-    );
+    const result = await usersDataAccessLayer.addUser({
+      accountData: {
+        userName: login,
+        email,
+        passwordHash: hash,
+        createdAt: new Date(),
+      },
+      emailConfirmation: {
+        confirmationCode: uuidv4(),
+        isConfirmed: true,
+        expirationDate: new Date(),
+      },
+    });
 
     if (result && result.insertedId) {
       const newlyAddedUser = await queryRepo.getUserByMongoId(
@@ -41,10 +40,11 @@ export const usersBusinessLogicLayer = {
       }
 
       return {
-        login: newlyAddedUser?.login,
-        email: newlyAddedUser?.email,
-        createdAt: newlyAddedUser?.createdAt,
-        id: newlyAddedUser?.id,
+        login: newlyAddedUser?.accountData.userName,
+        email: newlyAddedUser?.accountData.email,
+        createdAt: newlyAddedUser?.accountData.createdAt,
+        // eslint-disable-next-line no-underscore-dangle
+        id: newlyAddedUser?._id,
       };
     }
 
