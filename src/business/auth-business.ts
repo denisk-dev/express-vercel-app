@@ -102,6 +102,8 @@ export const authBusinessLogicLayer = {
 
     if (existingUser?.emailConfirmation.isConfirmed) return false;
 
+    existingUser.emailConfirmation.confirmationCode = uuidv4();
+
     try {
       await emailManager.sendRecoveryMessage(existingUser);
     } catch (error) {
