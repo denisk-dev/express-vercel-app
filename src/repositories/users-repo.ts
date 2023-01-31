@@ -1,4 +1,5 @@
 import { ObjectId } from "mongodb";
+import { v4 as uuidv4 } from "uuid";
 import { usersCollection } from "../db/db";
 import { TAddUser } from "../types/types";
 
@@ -34,6 +35,21 @@ export const usersDataAccessLayer = {
           "emailConfirmation.confirmationCode": code,
         },
         { $set: { "emailConfirmation.isConfirmed": true } }
+      );
+    } catch (error) {
+      console.log(error);
+      return null;
+    }
+  },
+
+  async changeConfirmationCode(email: string) {
+    try {
+      return await usersCollection.findOneAndUpdate(
+        {
+          "accountData.email": email,
+        },
+        { $set: { "emailConfirmation.confirmationCode": uuidv4() } },
+        { returnDocument: "after" }
       );
     } catch (error) {
       console.log(error);

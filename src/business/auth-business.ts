@@ -102,8 +102,20 @@ export const authBusinessLogicLayer = {
 
     if (existingUser?.emailConfirmation.isConfirmed) return false;
 
+    const result = await usersDataAccessLayer.changeConfirmationCode(
+      existingUser.accountData.email
+    );
+
+    if (
+      result?.value === null ||
+      result?.value === undefined ||
+      result?.ok === 0
+    ) {
+      return false;
+    }
+
     try {
-      await emailManager.sendRecoveryMessage(existingUser);
+      await emailManager.sendRecoveryMessage(result?.value);
     } catch (error) {
       // probably a right thing to do
       // const deletedResult = await usersDataAccessLayer.deleteUser(user);
