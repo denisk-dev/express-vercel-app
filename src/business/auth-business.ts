@@ -38,13 +38,13 @@ export const authBusinessLogicLayer = {
 
     const newAccessToken = jwtService.createJWT(
       existingUser,
-      "1000000",
+      "10000",
       "my-32-character-ultra-secure-and-ultra-long-secret"
     );
 
     const newRefreshToken = jwtService.createJWT(
       existingUser,
-      "500000",
+      "20000",
       "ro-32-character-ultra-secure-and-ultra-long-secret"
     );
 
@@ -85,13 +85,13 @@ export const authBusinessLogicLayer = {
       if (isValid) {
         const accessToken = jwtService.createJWT(
           result,
-          "1000000",
+          "10000",
           "my-32-character-ultra-secure-and-ultra-long-secret"
         );
 
         const refreshToken = jwtService.createJWT(
           result,
-          "500000",
+          "20000",
           "ro-32-character-ultra-secure-and-ultra-long-secret"
         );
 
