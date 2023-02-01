@@ -1,5 +1,7 @@
 import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
+import { ObjectId } from "mongodb";
+import jwt from "jsonwebtoken";
 import add from "date-fns/add";
 import isBefore from "date-fns/isBefore";
 import { queryRepo } from "../repositories/query-repo";
@@ -7,8 +9,70 @@ import { jwtService } from "../application/jwt-service";
 import { usersDataAccessLayer } from "../repositories/users-repo";
 import { emailManager } from "../manager/email-manager";
 import { TAddUser } from "../types/types";
+
+//TODO put the secret keys in one place
+const JWT_SECRET =
+  process.env.JWT_SECRET ||
+  "ro-32-character-ultra-secure-and-ultra-long-secret";
+
 // CUD only
 export const authBusinessLogicLayer = {
+  async refreshToken(cookies: any) {
+    const { refreshToken } = cookies;
+
+    if (typeof refreshToken !== "string") return false;
+
+    let tokenContent: any;
+    try {
+      tokenContent = jwt.verify(refreshToken, JWT_SECRET);
+    } catch (error) {
+      // console.log(error);
+      return false;
+    }
+
+    const { id } = tokenContent;
+
+    const existingUser = await queryRepo.getUserByMongoId(new ObjectId(id));
+
+    if (!existingUser) return false;
+
+    const newAccessToken = jwtService.createJWT(
+      existingUser,
+      "1000000",
+      "my-32-character-ultra-secure-and-ultra-long-secret"
+    );
+
+    const newRefreshToken = jwtService.createJWT(
+      existingUser,
+      "500000",
+      "ro-32-character-ultra-secure-and-ultra-long-secret"
+    );
+
+    return { accessToken: newAccessToken, refreshToken: newRefreshToken };
+  },
+
+  async logout(cookies: any) {
+    const { refreshToken } = cookies;
+
+    if (typeof refreshToken !== "string") return false;
+
+    let tokenContent: any;
+    try {
+      tokenContent = jwt.verify(refreshToken, JWT_SECRET);
+    } catch (error) {
+      // console.log(error);
+      return false;
+    }
+
+    const { id } = tokenContent;
+
+    const existingUser = await queryRepo.getUserByMongoId(new ObjectId(id));
+
+    if (!existingUser) return false;
+
+    return true;
+  },
+
   async login(loginOrEmail: string, password: string) {
     const result = await queryRepo.findUser(loginOrEmail);
 
@@ -19,9 +83,19 @@ export const authBusinessLogicLayer = {
       );
 
       if (isValid) {
-        const token = jwtService.createJWT(result);
+        const accessToken = jwtService.createJWT(
+          result,
+          "1000000",
+          "my-32-character-ultra-secure-and-ultra-long-secret"
+        );
 
-        return token;
+        const refreshToken = jwtService.createJWT(
+          result,
+          "500000",
+          "ro-32-character-ultra-secure-and-ultra-long-secret"
+        );
+
+        return { accessToken, refreshToken };
       }
     }
 

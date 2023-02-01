@@ -1,5 +1,6 @@
 import express from "express";
 import bodyParser from "body-parser";
+import cookieParser from "cookie-parser";
 import blogs from "../routes/blogs-routes";
 import posts from "../routes/posts-routes";
 import users from "../routes/users-routes";
@@ -13,6 +14,7 @@ const createServer = () => {
   const app = express();
 
   app.use(bodyParser.json());
+  app.use(cookieParser());
 
   app.use("/blogs", blogs);
   app.use("/posts", posts);

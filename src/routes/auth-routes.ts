@@ -13,6 +13,19 @@ import { authBusinessLogicLayer } from "../business/auth-business";
 
 const router = Router();
 
+router.post("/refresh-token", async (req: Request, res: Response) => {
+  const result = await authBusinessLogicLayer.refreshToken(req.cookies);
+
+  if (result) {
+    res.cookie("refreshToken", result.refreshToken, {
+      httpOnly: true,
+      secure: true,
+    });
+    return res.status(200).send({ accessToken: result.accessToken });
+  }
+  return res.sendStatus(401);
+});
+
 router.post(
   "/login",
   [...login, sendErrorsIfThereAreAny],
@@ -23,7 +36,11 @@ router.post(
     const token = await authBusinessLogicLayer.login(loginOrEmail, password);
 
     if (token) {
-      return res.status(200).send({ accessToken: token });
+      res.cookie("refreshToken", token.refreshToken, {
+        httpOnly: true,
+        secure: true,
+      });
+      return res.status(200).send({ accessToken: token.accessToken });
     }
 
     return res.sendStatus(401);
@@ -117,5 +134,18 @@ router.post(
     return res.sendStatus(204);
   }
 );
+
+router.post("/logout", async (req: Request, res: Response) => {
+  const result = await authBusinessLogicLayer.logout(req.cookies);
+
+  if (result) {
+    res.cookie("refreshToken", "", {
+      httpOnly: true,
+      secure: true,
+    });
+    return res.sendStatus(204);
+  }
+  return res.sendStatus(401);
+});
 
 export default router;
