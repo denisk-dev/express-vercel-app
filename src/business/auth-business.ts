@@ -41,6 +41,8 @@ export const authBusinessLogicLayer = {
 
     if (!result?.value) return false;
 
+    if (result?.value?.expiredRefreshTokens?.includes(id)) return false;
+
     const newAccessToken = jwtService.createJWT(
       result?.value,
       "10000",
@@ -70,8 +72,6 @@ export const authBusinessLogicLayer = {
     }
 
     const { id } = tokenContent;
-
-    console.log(id, "id");
 
     const existingUser = await queryRepo.getUserByMongoId(new ObjectId(id));
 
