@@ -56,6 +56,21 @@ export const usersDataAccessLayer = {
       return null;
     }
   },
+
+  async findOneAndExpireRefreshToken(id: ObjectId, token: string) {
+    try {
+      return await usersCollection.findOneAndUpdate(
+        {
+          _id: new ObjectId(id),
+        },
+        { $push: { expiredRefreshTokens: token } },
+        { returnDocument: "after" }
+      );
+    } catch (error) {
+      console.log(error);
+      return null;
+    }
+  },
 };
 
 export default usersDataAccessLayer;

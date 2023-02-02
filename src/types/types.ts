@@ -53,4 +53,5 @@ export interface TAddUser {
     expirationDate: Date;
     isConfirmed: boolean;
   };
+  expiredRefreshTokens?: string[];
 }

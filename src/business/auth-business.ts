@@ -32,18 +32,23 @@ export const authBusinessLogicLayer = {
 
     const { id } = tokenContent;
 
-    const existingUser = await queryRepo.getUserByMongoId(new ObjectId(id));
+    // const existingUser = await queryRepo.getUserByMongoId(new ObjectId(id));
 
-    if (!existingUser) return false;
+    const result = await usersDataAccessLayer.findOneAndExpireRefreshToken(
+      id,
+      refreshToken
+    );
+
+    if (!result?.value) return false;
 
     const newAccessToken = jwtService.createJWT(
-      existingUser,
+      result?.value,
       "10000",
       "my-32-character-ultra-secure-and-ultra-long-secret"
     );
 
     const newRefreshToken = jwtService.createJWT(
-      existingUser,
+      result?.value,
       "20000",
       "ro-32-character-ultra-secure-and-ultra-long-secret"
     );
@@ -66,9 +71,13 @@ export const authBusinessLogicLayer = {
 
     const { id } = tokenContent;
 
+    console.log(id, "id");
+
     const existingUser = await queryRepo.getUserByMongoId(new ObjectId(id));
 
     if (!existingUser) return false;
+
+    if (existingUser?.expiredRefreshTokens?.includes(id)) return false;
 
     return true;
   },
