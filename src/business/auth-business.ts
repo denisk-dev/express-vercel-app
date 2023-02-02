@@ -38,20 +38,29 @@ export const authBusinessLogicLayer = {
       id,
       refreshToken
     );
+    // console.log(result, "result");
+
+    console.log(
+      result?.value?.expiredRefreshTokens,
+      "result?.value?.expiredRefreshTokens?"
+    );
+
+    console.log(id);
 
     if (!result?.value) return false;
 
-    if (result?.value?.expiredRefreshTokens?.includes(id)) return false;
+    if (result?.value?.expiredRefreshTokens?.includes(refreshToken))
+      return false;
 
     const newAccessToken = jwtService.createJWT(
       result?.value,
-      "10000",
+      "1000000",
       "my-32-character-ultra-secure-and-ultra-long-secret"
     );
 
     const newRefreshToken = jwtService.createJWT(
       result?.value,
-      "20000",
+      "2000000",
       "ro-32-character-ultra-secure-and-ultra-long-secret"
     );
 
@@ -77,7 +86,8 @@ export const authBusinessLogicLayer = {
 
     if (!existingUser) return false;
 
-    if (existingUser?.expiredRefreshTokens?.includes(id)) return false;
+    if (existingUser?.expiredRefreshTokens?.includes(refreshToken))
+      return false;
 
     return true;
   },
@@ -94,13 +104,13 @@ export const authBusinessLogicLayer = {
       if (isValid) {
         const accessToken = jwtService.createJWT(
           result,
-          "10000",
+          "1000000",
           "my-32-character-ultra-secure-and-ultra-long-secret"
         );
 
         const refreshToken = jwtService.createJWT(
           result,
-          "20000",
+          "2000000",
           "ro-32-character-ultra-secure-and-ultra-long-secret"
         );
 
