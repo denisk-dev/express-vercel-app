@@ -81,8 +81,8 @@ export const authBusinessLogicLayer = {
 
     if (!existingUser) return false;
 
-    // if (existingUser?.expiredRefreshTokens?.includes(refreshToken))
-    //   return false;
+    if (existingUser?.expiredRefreshTokens?.includes(refreshToken))
+      return false;
     // await usersDataAccessLayer.findOneAndExpireRefreshToken(id, refreshToken);
 
     return true;
