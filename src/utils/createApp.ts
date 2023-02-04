@@ -1,6 +1,7 @@
 import express from "express";
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
+import useragent from "express-useragent";
 import blogs from "../routes/blogs-routes";
 import posts from "../routes/posts-routes";
 import users from "../routes/users-routes";
@@ -13,6 +14,8 @@ import { usersDataAccessLayer } from "../repositories/users-repo";
 const createServer = () => {
   const app = express();
 
+  app.set("trust proxy", true);
+  app.use(useragent.express());
   app.use(bodyParser.json());
   app.use(cookieParser());
 

@@ -1479,6 +1479,13 @@
     "@types/qs" "*"
     "@types/range-parser" "*"
 
+"@types/express-useragent@^1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@types/express-useragent/-/express-useragent-1.0.2.tgz#c129f2aae983fb7b646dbcd254973936f745c12f"
+  integrity sha512-eUVCqMsmEO7adMJSxuAARPUxbEJLYQJATiB86bx3MGeyUOTgKNnLTfAMaF+z84DftcH6NBbFFwiRomIcsFVdUQ==
+  dependencies:
+    "@types/express" "*"
+
 "@types/express@*":
   version "4.17.16"
   resolved "https://registry.yarnpkg.com/@types/express/-/express-4.17.16.tgz#986caf0b4b850611254505355daa24e1b8323de8"
@@ -2784,6 +2791,11 @@ expect@^29.0.0, expect@^29.3.1:
     jest-matcher-utils "^29.3.1"
     jest-message-util "^29.3.1"
     jest-util "^29.3.1"
+
+express-useragent@^1.0.15:
+  version "1.0.15"
+  resolved "https://registry.yarnpkg.com/express-useragent/-/express-useragent-1.0.15.tgz#cefda5fa4904345d51d3368b117a8dd4124985d9"
+  integrity sha512-eq5xMiYCYwFPoekffMjvEIk+NWdlQY9Y38OsTyl13IvA728vKT+q/CSERYWzcw93HGBJcIqMIsZC5CZGARPVdg==
 
 express-validator@^6.14.2:
   version "6.14.2"

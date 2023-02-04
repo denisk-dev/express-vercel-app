@@ -54,4 +54,10 @@ export interface TAddUser {
     isConfirmed: boolean;
   };
   expiredRefreshTokens?: string[];
+  // refreshTokensMeta?: {
+  //   issuedAt: Date;
+  //   deviceId: string;
+  //   ip: string;
+  //   deviceName: string;
+  // };
 }

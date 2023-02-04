@@ -56,6 +56,16 @@ router.get("/me", [auth], (req: Request, res: Response) => {
   res.send({ email, login: userName, userId: _id });
 });
 
+router.get("/sdfwerewr", (req: Request, res: Response) => {
+  // console.log(req, "req");
+
+  console.log(req.useragent);
+
+  console.log(req.ip);
+
+  res.sendStatus(201);
+});
+
 router.post(
   "/registration-confirmation",
   [validateRegistrationCode, sendErrorsIfThereAreAny],
