@@ -63,7 +63,7 @@ router.get("/sdfwerewr", (req: Request, res: Response) => {
 
   console.log(req.ip);
 
-  res.sendStatus(201);
+  res.send({ user: req.useragent, ip: req.ip });
 });
 
 router.post(
