@@ -80,9 +80,9 @@ export const usersDataAccessLayer = {
         {
           _id: id,
           "refreshTokensMeta.deviceId": deviceId,
-          "refreshTokensMeta.issuedAt": iat,
+          "refreshTokensMeta.lastActiveDate": iat,
         },
-        { $set: { "refreshTokensMeta.$.issuedAt": newiat } },
+        { $set: { "refreshTokensMeta.$.lastActiveDate": newiat } },
         { returnDocument: "after" }
       );
     } catch (error) {

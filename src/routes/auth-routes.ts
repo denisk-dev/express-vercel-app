@@ -26,7 +26,7 @@ router.post("/refresh-token", async (req: Request, res: Response) => {
   if (result) {
     res.cookie("refreshToken", result.refreshToken, {
       httpOnly: true,
-      secure: true,
+      // secure: true,
     });
     return res.status(200).send({ accessToken: result.accessToken });
   }
@@ -35,7 +35,7 @@ router.post("/refresh-token", async (req: Request, res: Response) => {
 
 router.post(
   "/login",
-  [...login, sendErrorsIfThereAreAny],
+  [apiLimiter, ...login, sendErrorsIfThereAreAny],
   async (req: Request, res: Response) => {
     // eslint-disable-next-line @typescript-eslint/no-shadow
     const { loginOrEmail, password } = req.body;
@@ -50,7 +50,7 @@ router.post(
     if (token) {
       res.cookie("refreshToken", token.refreshToken, {
         httpOnly: true,
-        secure: true,
+        // secure: true,
       });
       return res.status(200).send({ accessToken: token.accessToken });
     }
@@ -153,7 +153,7 @@ router.post("/logout", async (req: Request, res: Response) => {
   if (result) {
     res.cookie("refreshToken", "", {
       httpOnly: true,
-      secure: true,
+      // secure: true,
     });
     return res.sendStatus(204);
   }
