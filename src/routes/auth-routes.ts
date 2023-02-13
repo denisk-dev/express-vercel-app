@@ -1,5 +1,5 @@
 import { Router, Request, Response } from "express";
-import rateLimit from "express-rate-limit";
+import { getApiLimiter } from "../utils/getApiLimiter";
 import { auth } from "../middlewares/auth";
 import {
   login,
@@ -10,13 +10,6 @@ import {
 } from "../middlewares/input-validation";
 
 import { authBusinessLogicLayer } from "../business/auth-business";
-
-const apiLimiter = rateLimit({
-  windowMs: 10000,
-  max: 5, // Limit each IP to 100 requests per `window`
-  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-});
 
 const router = Router();
 
@@ -35,7 +28,7 @@ router.post("/refresh-token", async (req: Request, res: Response) => {
 
 router.post(
   "/login",
-  [apiLimiter, ...login, sendErrorsIfThereAreAny],
+  [getApiLimiter(), ...login, sendErrorsIfThereAreAny],
   async (req: Request, res: Response) => {
     // eslint-disable-next-line @typescript-eslint/no-shadow
     const { loginOrEmail, password } = req.body;
@@ -70,7 +63,7 @@ router.get("/me", [auth], (req: Request, res: Response) => {
 
 router.post(
   "/registration-confirmation",
-  [apiLimiter, validateRegistrationCode, sendErrorsIfThereAreAny],
+  [getApiLimiter(), validateRegistrationCode, sendErrorsIfThereAreAny],
   async (req: Request, res: Response) => {
     const { code } = req.body;
 
@@ -96,7 +89,7 @@ router.post(
 
 router.post(
   "/registration",
-  [apiLimiter, ...validateRegistration, sendErrorsIfThereAreAny],
+  [getApiLimiter(), ...validateRegistration, sendErrorsIfThereAreAny],
   async (req: Request, res: Response) => {
     // eslint-disable-next-line @typescript-eslint/no-shadow
     const { login, password, email } = req.body;
@@ -124,7 +117,7 @@ router.post(
 
 router.post(
   "/registration-email-resending",
-  [apiLimiter, validateEmailOnly, sendErrorsIfThereAreAny],
+  [getApiLimiter(), validateEmailOnly, sendErrorsIfThereAreAny],
   async (req: Request, res: Response) => {
     const { email } = req.body;
 
