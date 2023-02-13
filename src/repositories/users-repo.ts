@@ -24,6 +24,18 @@ export const usersDataAccessLayer = {
     }
   },
 
+  async deleteDeviceSession(id: string, deviceId: string) {
+    try {
+      return await usersCollection.updateOne(
+        { _id: new ObjectId(id) },
+        { $pull: { refreshTokensMeta: { deviceId } } }
+      );
+    } catch (e) {
+      console.log(e);
+      return null;
+    }
+  },
+
   async removeAllUsers() {
     await usersCollection.deleteMany({});
   },
@@ -57,14 +69,50 @@ export const usersDataAccessLayer = {
     }
   },
 
-  async findOneAndExpireRefreshToken(id: ObjectId, token: string) {
+  async findOneAndExpireRefreshToken(
+    id: ObjectId,
+    deviceId: string,
+    iat: Date,
+    newiat: Date
+  ) {
     try {
       return await usersCollection.findOneAndUpdate(
         {
-          _id: new ObjectId(id),
+          _id: id,
+          "refreshTokensMeta.deviceId": deviceId,
+          "refreshTokensMeta.issuedAt": iat,
         },
-        { $push: { expiredRefreshTokens: token } },
+        { $set: { "refreshTokensMeta.$.issuedAt": newiat } },
         { returnDocument: "after" }
+      );
+    } catch (error) {
+      console.log(error);
+      return null;
+    }
+  },
+
+  async findOneAndAddTokenMetaData(
+    id: any,
+    ip: string,
+    useragent: any,
+    refreshTokenIssuedAt: Date,
+    deviceId: string
+  ) {
+    try {
+      return await usersCollection.findOneAndUpdate(
+        {
+          _id: id,
+        },
+        {
+          $push: {
+            refreshTokensMeta: {
+              lastActiveDate: refreshTokenIssuedAt,
+              ip,
+              title: useragent.source,
+              deviceId,
+            },
+          },
+        }
       );
     } catch (error) {
       console.log(error);

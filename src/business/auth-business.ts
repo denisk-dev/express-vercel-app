@@ -4,6 +4,7 @@ import { ObjectId } from "mongodb";
 import jwt from "jsonwebtoken";
 import add from "date-fns/add";
 import isBefore from "date-fns/isBefore";
+
 import { queryRepo } from "../repositories/query-repo";
 import { jwtService } from "../application/jwt-service";
 import { usersDataAccessLayer } from "../repositories/users-repo";
@@ -26,40 +27,51 @@ export const authBusinessLogicLayer = {
     try {
       tokenContent = jwt.verify(refreshToken, JWT_SECRET);
     } catch (error) {
-      // console.log(error);
       return false;
     }
 
-    const { id } = tokenContent;
+    const { id, deviceId, iat } = tokenContent;
 
     const existingUser = await queryRepo.getUserByMongoId(new ObjectId(id));
 
-    if (existingUser?.expiredRefreshTokens?.includes(refreshToken))
-      return false;
-
-    const result = await usersDataAccessLayer.findOneAndExpireRefreshToken(
-      id,
-      refreshToken
+    const isExistingDevice = existingUser?.refreshTokensMeta?.filter(
+      (e) => e.deviceId === deviceId && e.lastActiveDate === iat
     );
 
-    if (!result?.value) return false;
+    if (
+      existingUser &&
+      Array.isArray(isExistingDevice) &&
+      isExistingDevice.length === 1
+    ) {
+      const newAccessToken = jwtService.createJWT(
+        existingUser,
+        "10000",
+        "my-32-character-ultra-secure-and-ultra-long-secret"
+      );
 
-    // if (result?.value?.expiredRefreshTokens?.includes(refreshToken))
-    //   return false;
+      const newRefreshToken = jwtService.createJWTrefresh(
+        // eslint-disable-next-line no-underscore-dangle
+        { _id: existingUser._id, deviceId },
+        "20000",
+        "ro-32-character-ultra-secure-and-ultra-long-secret"
+      );
 
-    const newAccessToken = jwtService.createJWT(
-      result?.value,
-      "10000",
-      "my-32-character-ultra-secure-and-ultra-long-secret"
-    );
+      const { iat: newiat } = jwt.decode(newRefreshToken) as any;
 
-    const newRefreshToken = jwtService.createJWT(
-      result?.value,
-      "20000",
-      "ro-32-character-ultra-secure-and-ultra-long-secret"
-    );
+      const result = await usersDataAccessLayer.findOneAndExpireRefreshToken(
+        // eslint-disable-next-line no-underscore-dangle
+        existingUser._id,
+        deviceId,
+        iat,
+        newiat
+      );
 
-    return { accessToken: newAccessToken, refreshToken: newRefreshToken };
+      if (!result?.value) return false;
+
+      return { accessToken: newAccessToken, refreshToken: newRefreshToken };
+    }
+
+    return false;
   },
 
   async logout(cookies: any) {
@@ -69,26 +81,35 @@ export const authBusinessLogicLayer = {
 
     let tokenContent: any;
     try {
-      tokenContent = jwt.verify(refreshToken, JWT_SECRET);
+      tokenContent = jwt.verify(
+        refreshToken,
+        "ro-32-character-ultra-secure-and-ultra-long-secret"
+      );
     } catch (error) {
       // console.log(error);
       return false;
     }
 
-    const { id } = tokenContent;
+    const { id, deviceId } = tokenContent;
 
     const existingUser = await queryRepo.getUserByMongoId(new ObjectId(id));
 
     if (!existingUser) return false;
 
-    if (existingUser?.expiredRefreshTokens?.includes(refreshToken))
-      return false;
-    await usersDataAccessLayer.findOneAndExpireRefreshToken(id, refreshToken);
+    const result = await usersDataAccessLayer.deleteDeviceSession(id, deviceId);
 
-    return true;
+    if (result?.modifiedCount === 1) {
+      return true;
+    }
+    return false;
   },
 
-  async login(loginOrEmail: string, password: string) {
+  async login(
+    loginOrEmail: string,
+    password: string,
+    ip: string,
+    useragent: any
+  ) {
     const result = await queryRepo.findUser(loginOrEmail);
 
     if (result && result.emailConfirmation.isConfirmed) {
@@ -97,6 +118,8 @@ export const authBusinessLogicLayer = {
         result.accountData.passwordHash
       );
 
+      const deviceId = uuidv4();
+
       if (isValid) {
         const accessToken = jwtService.createJWT(
           result,
@@ -104,13 +127,29 @@ export const authBusinessLogicLayer = {
           "my-32-character-ultra-secure-and-ultra-long-secret"
         );
 
-        const refreshToken = jwtService.createJWT(
-          result,
+        const refreshToken = jwtService.createJWTrefresh(
+          // eslint-disable-next-line no-underscore-dangle
+          { _id: result._id, deviceId },
           "20000",
           "ro-32-character-ultra-secure-and-ultra-long-secret"
         );
 
-        return { accessToken, refreshToken };
+        const { iat, deviceId: devid } = jwt.decode(refreshToken) as any;
+
+        const resultOfAddedTokenMetadata =
+          await usersDataAccessLayer.findOneAndAddTokenMetaData(
+            // eslint-disable-next-line no-underscore-dangle
+            result._id,
+            ip,
+            useragent,
+            iat,
+            devid
+          );
+
+        if (resultOfAddedTokenMetadata?.lastErrorObject?.updatedExisting) {
+          return { accessToken, refreshToken };
+        }
+        return false;
       }
     }
 

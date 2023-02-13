@@ -19,6 +19,22 @@ export const jwtService = {
     });
     return token;
   },
+  createJWTrefresh(
+    user: { _id: ObjectId; deviceId: string },
+    time: string,
+    JWT_SECRET: string
+  ) {
+    // eslint-disable-next-line no-underscore-dangle
+    const token = jwt.sign(
+      // eslint-disable-next-line no-underscore-dangle
+      { id: user._id, deviceId: user.deviceId },
+      JWT_SECRET,
+      {
+        expiresIn: time,
+      }
+    );
+    return token;
+  },
 
   getUserIdByToken(token: string) {
     try {

@@ -221,6 +221,17 @@ export const queryRepo = {
       return null;
     }
   },
+
+  async findUserByDeviceId(deviceId: string) {
+    try {
+      return await usersCollection.findOne({
+        refreshTokensMeta: { $elemMatch: { deviceId } },
+      });
+    } catch (error) {
+      console.log(error);
+      return null;
+    }
+  },
 };
 
 export default queryRepo;

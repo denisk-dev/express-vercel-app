@@ -53,11 +53,11 @@ export interface TAddUser {
     expirationDate: Date;
     isConfirmed: boolean;
   };
-  expiredRefreshTokens?: string[];
-  // refreshTokensMeta?: {
-  //   issuedAt: Date;
-  //   deviceId: string;
-  //   ip: string;
-  //   deviceName: string;
-  // };
+  // expiredRefreshTokens?: string[];
+  refreshTokensMeta?: Array<{
+    lastActiveDate: Date;
+    deviceId: string;
+    ip: string;
+    title: string;
+  }>;
 }

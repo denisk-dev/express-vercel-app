@@ -10,6 +10,7 @@ import comments from "../routes/comments-routes";
 import { blogsDataAccessLayer } from "../repositories/blogs-repo";
 import { postsDataAccessLayer } from "../repositories/posts-repo";
 import { usersDataAccessLayer } from "../repositories/users-repo";
+import security from "../routes/security-routes";
 
 const createServer = () => {
   const app = express();
@@ -24,6 +25,7 @@ const createServer = () => {
   app.use("/users", users);
   app.use("/auth", auth);
   app.use("/comments", comments);
+  app.use("/security", security);
 
   app.delete("/testing/all-data", async (req, res) => {
     await blogsDataAccessLayer.removeAllBlogs();

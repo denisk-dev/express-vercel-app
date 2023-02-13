@@ -1,5 +1,5 @@
 import { Router, Request, Response } from "express";
-
+import rateLimit from "express-rate-limit";
 import { auth } from "../middlewares/auth";
 import {
   login,
@@ -10,6 +10,13 @@ import {
 } from "../middlewares/input-validation";
 
 import { authBusinessLogicLayer } from "../business/auth-business";
+
+const apiLimiter = rateLimit({
+  windowMs: 10000,
+  max: 5, // Limit each IP to 100 requests per `window`
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+});
 
 const router = Router();
 
@@ -33,7 +40,12 @@ router.post(
     // eslint-disable-next-line @typescript-eslint/no-shadow
     const { loginOrEmail, password } = req.body;
 
-    const token = await authBusinessLogicLayer.login(loginOrEmail, password);
+    const token = await authBusinessLogicLayer.login(
+      loginOrEmail,
+      password,
+      req.ip,
+      req.useragent
+    );
 
     if (token) {
       res.cookie("refreshToken", token.refreshToken, {
@@ -56,19 +68,9 @@ router.get("/me", [auth], (req: Request, res: Response) => {
   res.send({ email, login: userName, userId: _id });
 });
 
-router.get("/sdfwerewr", (req: Request, res: Response) => {
-  // console.log(req, "req");
-
-  console.log(req.useragent);
-
-  console.log(req.ip);
-
-  res.send({ user: req.useragent, ip: req.ip });
-});
-
 router.post(
   "/registration-confirmation",
-  [validateRegistrationCode, sendErrorsIfThereAreAny],
+  [apiLimiter, validateRegistrationCode, sendErrorsIfThereAreAny],
   async (req: Request, res: Response) => {
     const { code } = req.body;
 
@@ -94,7 +96,7 @@ router.post(
 
 router.post(
   "/registration",
-  [...validateRegistration, sendErrorsIfThereAreAny],
+  [apiLimiter, ...validateRegistration, sendErrorsIfThereAreAny],
   async (req: Request, res: Response) => {
     // eslint-disable-next-line @typescript-eslint/no-shadow
     const { login, password, email } = req.body;
@@ -122,7 +124,7 @@ router.post(
 
 router.post(
   "/registration-email-resending",
-  [validateEmailOnly, sendErrorsIfThereAreAny],
+  [apiLimiter, validateEmailOnly, sendErrorsIfThereAreAny],
   async (req: Request, res: Response) => {
     const { email } = req.body;
 
