@@ -45,14 +45,14 @@ export const authBusinessLogicLayer = {
     ) {
       const newAccessToken = jwtService.createJWT(
         existingUser,
-        "1000000",
+        "10000",
         "my-32-character-ultra-secure-and-ultra-long-secret"
       );
 
       const newRefreshToken = jwtService.createJWTrefresh(
         // eslint-disable-next-line no-underscore-dangle
         { _id: existingUser._id, deviceId },
-        "2000000",
+        "20000",
         "ro-32-character-ultra-secure-and-ultra-long-secret"
       );
 
@@ -123,14 +123,14 @@ export const authBusinessLogicLayer = {
       if (isValid) {
         const accessToken = jwtService.createJWT(
           result,
-          "1000000",
+          "10000",
           "my-32-character-ultra-secure-and-ultra-long-secret"
         );
 
         const refreshToken = jwtService.createJWTrefresh(
           // eslint-disable-next-line no-underscore-dangle
           { _id: result._id, deviceId },
-          "2000000",
+          "20000",
           "ro-32-character-ultra-secure-and-ultra-long-secret"
         );
 
