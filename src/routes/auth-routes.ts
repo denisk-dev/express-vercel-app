@@ -89,7 +89,8 @@ router.post(
 
 router.post(
   "/registration",
-  [getApiLimiter(), ...validateRegistration, sendErrorsIfThereAreAny],
+  getApiLimiter(),
+  [...validateRegistration, sendErrorsIfThereAreAny],
   async (req: Request, res: Response) => {
     // eslint-disable-next-line @typescript-eslint/no-shadow
     const { login, password, email } = req.body;
