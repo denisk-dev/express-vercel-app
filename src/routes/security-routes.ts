@@ -10,8 +10,17 @@ const router = Router();
 router.get("/devices", async (req: Request, res: Response) => {
   const result = await securityBusinessLogicLayer.getAllDevices(req.cookies);
 
+  const mappedDate = Array.isArray(result)
+    ? result?.map((r) => ({
+        lastActiveDate: new Date(r.lastActiveDate * 1000).toISOString(),
+        ip: r.ip,
+        title: r.title,
+        deviceId: r.deviceId,
+      }))
+    : null;
+
   if (result) {
-    return res.status(200).send(result);
+    return res.status(200).send(mappedDate);
   }
 
   return res.sendStatus(401);

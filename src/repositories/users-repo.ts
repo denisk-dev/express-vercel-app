@@ -95,7 +95,7 @@ export const usersDataAccessLayer = {
     id: any,
     ip: string,
     useragent: any,
-    refreshTokenIssuedAt: Date,
+    refreshTokenIssuedAt: number,
     deviceId: string
   ) {
     try {

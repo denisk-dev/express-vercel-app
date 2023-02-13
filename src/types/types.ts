@@ -55,7 +55,7 @@ export interface TAddUser {
   };
   // expiredRefreshTokens?: string[];
   refreshTokensMeta?: Array<{
-    lastActiveDate: Date;
+    lastActiveDate: number;
     deviceId: string;
     ip: string;
     title: string;
