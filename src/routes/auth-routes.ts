@@ -88,7 +88,14 @@ router.post(
     if (isSent) {
       return res.sendStatus(204);
     }
-    return res.sendStatus(400);
+    return res.status(400).send({
+      errorsMessages: [
+        {
+          message: "Some error",
+          field: "recoveryCode",
+        },
+      ],
+    });
   }
 );
 

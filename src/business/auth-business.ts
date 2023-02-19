@@ -287,7 +287,7 @@ export const authBusinessLogicLayer = {
       recoveryCode,
       passwordHash
     );
-    console.log(result, "resukt");
+
     if (!result) return false;
 
     return true;
