@@ -68,12 +68,9 @@ router.post(
   async (req: Request, res: Response) => {
     const { email } = req.body;
 
-    const isSent = await authBusinessLogicLayer.passwordRecoveryEmail(email);
+    await authBusinessLogicLayer.passwordRecoveryEmail(email);
 
-    if (isSent) {
-      return res.sendStatus(204);
-    }
-    return res.sendStatus(500);
+    return res.sendStatus(204);
   }
 );
 
@@ -91,7 +88,7 @@ router.post(
     if (isSent) {
       return res.sendStatus(204);
     }
-    return res.sendStatus(500);
+    return res.sendStatus(400);
   }
 );
 
