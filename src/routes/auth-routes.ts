@@ -7,6 +7,7 @@ import {
   validateRegistration,
   validateRegistrationCode,
   validateEmailOnly,
+  validateNewPassword,
 } from "../middlewares/input-validation";
 
 import { authBusinessLogicLayer } from "../business/auth-business";
@@ -60,6 +61,39 @@ router.get("/me", [auth], (req: Request, res: Response) => {
 
   res.send({ email, login: userName, userId: _id });
 });
+
+router.post(
+  "/password-recovery",
+  [getApiLimiter(), validateEmailOnly, sendErrorsIfThereAreAny],
+  async (req: Request, res: Response) => {
+    const { email } = req.body;
+
+    const isSent = await authBusinessLogicLayer.passwordRecoveryEmail(email);
+
+    if (isSent) {
+      return res.sendStatus(204);
+    }
+    return res.sendStatus(500);
+  }
+);
+
+router.post(
+  "/new-password",
+  [getApiLimiter(), ...validateNewPassword, sendErrorsIfThereAreAny],
+  async (req: Request, res: Response) => {
+    const { newPassword, recoveryCode } = req.body;
+
+    const isSent = await authBusinessLogicLayer.updatePassword(
+      newPassword,
+      recoveryCode
+    );
+
+    if (isSent) {
+      return res.sendStatus(204);
+    }
+    return res.sendStatus(500);
+  }
+);
 
 router.post(
   "/registration-confirmation",

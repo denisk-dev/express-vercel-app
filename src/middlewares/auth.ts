@@ -1,4 +1,3 @@
-import { ObjectId } from "mongodb";
 import { NextFunction, Request, Response } from "express";
 import { jwtService } from "../application/jwt-service";
 import { queryRepo } from "../repositories/query-repo";
@@ -27,9 +26,7 @@ export const auth = async (req: Request, res: Response, next: NextFunction) => {
 
   const userId = jwtService.getUserIdByToken(token);
 
-  const user = userId
-    ? await queryRepo.getUserByMongoId(new ObjectId(userId))
-    : null;
+  const user = userId ? await queryRepo.getUserByMongoId(userId) : null;
 
   if (user) {
     req.context = { user };

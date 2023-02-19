@@ -47,7 +47,8 @@
     "express-useragent": "^1.0.15",
     "express-validator": "^6.14.2",
     "jsonwebtoken": "^8.5.1",
-    "mongodb": "^4.10.0",
+    "mongodb": "^5.0.1",
+    "mongoose": "^6.9.1",
     "nodemailer": "^6.9.1",
     "uuid": "^9.0.0"
   }

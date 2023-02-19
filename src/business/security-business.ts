@@ -1,9 +1,8 @@
 import jwt from "jsonwebtoken";
-import { ObjectId } from "mongodb";
 import { queryRepo } from "../repositories/query-repo";
 import { securityDataAccessLayer } from "../repositories/security-repo";
 
-//TODO put the secret keys in one place
+// TODO put the secret keys in one place
 const JWT_SECRET =
   process.env.JWT_SECRET ||
   "ro-32-character-ultra-secure-and-ultra-long-secret";
@@ -23,7 +22,7 @@ export const securityBusinessLogicLayer = {
 
     const { id } = tokenContent;
 
-    const existingUser = await queryRepo.getUserByMongoId(new ObjectId(id));
+    const existingUser = await queryRepo.getUserByMongoId(id);
 
     if (existingUser) {
       return existingUser.refreshTokensMeta;

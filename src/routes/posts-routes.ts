@@ -1,11 +1,10 @@
 /* eslint-disable no-underscore-dangle */
 import { Router, Request, Response } from "express";
+import { isValidObjectId } from "mongoose";
 import { auth } from "../middlewares/auth";
 import { auth as authBasic } from "../middlewares/auth-basic";
-
 import { postsDataAccessLayer } from "../repositories/posts-repo";
 import { blogsDataAccessLayer } from "../repositories/blogs-repo";
-
 import { postsBusinessLogicLayer } from "../business/posts-business";
 import { queryRepo } from "../repositories/query-repo";
 
@@ -79,8 +78,8 @@ router.post(
         id: result.id,
         content: result.content,
         commentatorInfo: {
-          userId: result.userId,
-          userLogin: result.userLogin,
+          userId: result.commentatorInfo.userId,
+          userLogin: result.commentatorInfo.userLogin,
         },
         createdAt: result.createdAt,
       });
@@ -138,7 +137,7 @@ router.post(
     if (existingBlog) {
       const { name } = existingBlog;
 
-      const newlyAddedId = await postsBusinessLogicLayer.addPost(
+      const newlyAdded = await postsBusinessLogicLayer.addPost(
         {
           title,
           shortDescription,
@@ -148,9 +147,8 @@ router.post(
         name
       );
 
-      if (newlyAddedId) {
-        const post = await postsDataAccessLayer.getByMongoId(newlyAddedId);
-        res.status(201).send(post);
+      if (newlyAdded) {
+        res.status(201).send(newlyAdded);
       }
     } else {
       res.status(400).send({
@@ -212,6 +210,10 @@ router.put(
 
 router.delete("/:id", [authBasic], async (req: Request, res: Response) => {
   const { id } = req.params;
+
+  if (!isValidObjectId(id)) {
+    return res.sendStatus(404);
+  }
 
   const result = await postsBusinessLogicLayer.deleteById(id);
 

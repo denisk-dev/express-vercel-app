@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from "uuid";
 import { blogsDataAccessLayer } from "../repositories/blogs-repo";
 import { InputAddBlog } from "../types/types";
 
@@ -14,14 +13,10 @@ export const blogsBusinessLogicLayer = {
   },
 
   async addBlog(blog: InputAddBlog) {
-    const newBlog = { ...blog, id: uuidv4(), createdAt: new Date() };
+    const newBlogId = await blogsDataAccessLayer.addBlog({ ...blog });
 
-    const result = await blogsDataAccessLayer.addBlog(newBlog);
-
-    if (result) {
-      const { insertedId } = result;
-
-      return insertedId;
+    if (newBlogId) {
+      return newBlogId;
     }
 
     return null;

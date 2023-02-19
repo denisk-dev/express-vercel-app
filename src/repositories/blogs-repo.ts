@@ -1,17 +1,9 @@
-import { ObjectId } from "mongodb";
-import { blogsCollection, postsCollection } from "../db/db";
-import { Blogs, InputAddBlog } from "../types/types";
+import BlogSchema from "../models/Blogs";
+import PostsSchema from "../models/Posts";
+import { InputAddBlog } from "../types/types";
+import { skip, getSortBy } from "../utils/pagination";
 
-const projection = {
-  id: 1,
-  name: 1,
-  websiteUrl: 1,
-  description: 1,
-  createdAt: 1,
-  _id: 0,
-};
-
-//TODO MOVE ALL OF THE GET REQUESTS TO QUERY REPO, HERE IS CUD ONLY
+// TODO MOVE ALL OF THE GET REQUESTS TO QUERY REPO, HERE IS CUD ONLY
 
 export const blogsDataAccessLayer = {
   async findBlogs(
@@ -25,22 +17,18 @@ export const blogsDataAccessLayer = {
       ? { name: { $regex: searchNameTerm, $options: "i" } }
       : {};
 
-    const sort: any = {};
-    if (sortBy && sortDirection) {
-      sort[sortBy] = sortDirection === "desc" ? -1 : 1;
-    }
+    const sort = getSortBy(sortDirection, sortBy);
 
-    const skip = pageNumber > 0 ? (pageNumber - 1) * pageSize : 0;
-
-    const allValuesCount = await blogsCollection.countDocuments({
+    const allValuesCount = await BlogSchema.countDocuments({
       ...searchByPart,
     });
 
-    const cursor = blogsCollection
-      .find(searchByPart, { sort, skip, projection })
-      .limit(pageSize);
-
-    const limitedValues = (await cursor.toArray()) as Array<Blogs>;
+    const limitedValues = await BlogSchema.find(searchByPart, null, {
+      skip: skip(pageNumber, pageSize),
+    })
+      .sort(sort)
+      .limit(pageSize)
+      .lean();
 
     const pagesCount =
       allValuesCount < pageSize ? 1 : Math.ceil(allValuesCount / pageSize);
@@ -48,19 +36,16 @@ export const blogsDataAccessLayer = {
     return { items: limitedValues, totalCount: allValuesCount, pagesCount };
   },
 
-  async getById(id: string): Promise<false | Blogs> {
-    const result = await blogsCollection.findOne({ id }, { projection });
+  async getById(id: string) {
+    const result = await BlogSchema.findById(id);
 
     if (result) {
       return result;
     }
     return false;
   },
-  async getByMongoId(mongoId: ObjectId) {
-    const result = await blogsCollection.findOne(
-      { _id: mongoId },
-      { projection }
-    );
+  async getByMongoId(mongoId: string) {
+    const result = await BlogSchema.findOne({ _id: mongoId }).lean();
 
     if (result) {
       return result;
@@ -70,27 +55,35 @@ export const blogsDataAccessLayer = {
 
   async deleteById(id: string) {
     try {
-      return await blogsCollection.deleteOne({ id });
+      return await BlogSchema.deleteOne({ _id: id });
     } catch (error) {
       console.log(error);
       return null;
     }
   },
 
-  // TODO come up with the type.
-  async addBlog(blog: Blogs) {
+  async addBlog(blog: InputAddBlog) {
     try {
-      return await blogsCollection.insertOne(blog);
+      const blogs = new BlogSchema({
+        name: blog.name,
+        websiteUrl: blog.websiteUrl,
+        isMembership: blog.isMembership,
+        description: blog.description,
+      });
+
+      const bsdf = await blogs.save();
+
+      // eslint-disable-next-line no-underscore-dangle
+      return bsdf._id.toString();
     } catch (error) {
-      console.log(error);
       return null;
     }
   },
 
   async updateBlog(id: string, blog: InputAddBlog) {
     try {
-      return await blogsCollection.updateOne(
-        { id },
+      return await BlogSchema.updateOne(
+        { _id: id },
         {
           $set: {
             ...blog,
@@ -104,7 +97,7 @@ export const blogsDataAccessLayer = {
   },
 
   async removeAllBlogs() {
-    await blogsCollection.deleteMany({});
+    await BlogSchema.deleteMany({});
   },
 
   async findPostsForSpecificBlog(
@@ -114,27 +107,19 @@ export const blogsDataAccessLayer = {
     sortDirection: string,
     blogId: string
   ) {
-    // TODO check if sorting is working as expected
-    const sort: any = {};
-    if (sortBy && sortDirection) {
-      sort[sortBy] = sortDirection === "desc" ? -1 : 1;
-    }
+    const sort = getSortBy(sortDirection, sortBy);
 
-    const skip = pageNumber > 0 ? (pageNumber - 1) * pageSize : 0;
+    const allValuesCount = await PostsSchema.countDocuments({ blogId });
 
-    const allValuesArr = await postsCollection.find({ blogId }).toArray();
-
-    const allValuesCount = allValuesArr.length;
-
-    // TODO I think this way is better
-    // const allValuesCount = await blogsCollection.countDocuments({
-    //   blogId
-    // });
-
-    const allValues = await postsCollection
-      .find({ blogId }, { sort, skip, projection: { _id: 0, comments: 0 } })
+    const allValues = await PostsSchema.find(
+      { blogId },
+      {
+        skip: skip(pageNumber, pageSize),
+      }
+    )
+      .sort(sort)
       .limit(pageSize)
-      .toArray();
+      .lean();
 
     const pagesCount =
       allValuesCount < pageSize ? 1 : Math.ceil(allValuesCount / pageSize);

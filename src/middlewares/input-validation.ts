@@ -6,7 +6,12 @@ import { blogsDataAccessLayer } from "../repositories/blogs-repo";
 export const validateBlog = [
   body("name").isString().trim().isLength({ min: 3, max: 15 }),
   body("description").isString().trim().isLength({ min: 3, max: 500 }),
-  body("websiteUrl").isURL().trim().isLength({ min: 8, max: 100 }),
+  body("websiteUrl")
+    .trim()
+    .isLength({ min: 8, max: 100 })
+    .matches(
+      /^https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\\+.~#?&\\/=]*)$/
+    ),
 ];
 
 export const validatePost = [
@@ -138,4 +143,9 @@ export const validateRegistration = [
     .not()
     .isEmpty()
     .matches(/^[\w-\\.]+@([\w-]+\.)+[\w-]{2,4}$/),
+];
+
+export const validateNewPassword = [
+  body("newPassword").isString().trim().isLength({ min: 6, max: 20 }),
+  body("recoveryCode").isString().trim().not().isEmpty(),
 ];

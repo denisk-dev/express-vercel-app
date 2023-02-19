@@ -12,7 +12,7 @@ router.get("/devices", async (req: Request, res: Response) => {
 
   const mappedDate = Array.isArray(result)
     ? result?.map((r) => ({
-        lastActiveDate: new Date(r.lastActiveDate * 1000).toISOString(),
+        lastActiveDate: r.lastActiveDate.toISOString(),
         ip: r.ip,
         title: r.title,
         deviceId: r.deviceId,

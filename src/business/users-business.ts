@@ -30,21 +30,14 @@ export const usersBusinessLogicLayer = {
       },
     });
 
-    if (result && result.insertedId) {
-      const newlyAddedUser = await queryRepo.getUserByMongoId(
-        result.insertedId
-      );
-
-      if (!newlyAddedUser) {
-        return false;
-      }
-
+    // eslint-disable-next-line no-underscore-dangle
+    if (result && result._id) {
       return {
-        login: newlyAddedUser?.accountData.userName,
-        email: newlyAddedUser?.accountData.email,
-        createdAt: newlyAddedUser?.accountData.createdAt,
+        login: result?.accountData.userName,
+        email: result?.accountData.email,
+        createdAt: result?.accountData.createdAt,
         // eslint-disable-next-line no-underscore-dangle
-        id: newlyAddedUser?._id,
+        id: result?._id,
       };
     }
 

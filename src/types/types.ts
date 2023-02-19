@@ -6,12 +6,14 @@ export type Blogs = {
   description: string;
   websiteUrl: string;
   createdAt: Date;
+  isMembership?: boolean;
 };
 
 export type InputAddBlog = {
   name: string;
   websiteUrl: string;
   description: string;
+  isMembership?: boolean;
 };
 
 export type InputAddPost = {

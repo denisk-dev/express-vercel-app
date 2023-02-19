@@ -1,19 +1,8 @@
-import { ObjectId } from "mongodb";
-import { postsCollection } from "../db/db";
-import { Posts, InputAddPost } from "../types/types";
+import { InputAddPost } from "../types/types";
+import { skip, getSortBy } from "../utils/pagination";
+import PostsSchema from "../models/Posts";
 
 // TODO add eslint, why is not getting highlighted?????
-
-const projection = {
-  id: 1,
-  title: 1,
-  shortDescription: 1,
-  content: 1,
-  blogId: 1,
-  blogName: 1,
-  createdAt: 1,
-  _id: 0,
-};
 
 export const postsDataAccessLayer = {
   async findPosts(
@@ -27,22 +16,18 @@ export const postsDataAccessLayer = {
       ? { blogName: { $regex: searchNameTerm, $options: "i" } }
       : {};
 
-    const sort: any = {};
-    if (sortBy && sortDirection) {
-      sort[sortBy] = sortDirection === "desc" ? -1 : 1;
-    }
+    const sort = getSortBy(sortDirection, sortBy);
 
-    const skip = pageNumber > 0 ? (pageNumber - 1) * pageSize : 0;
-
-    const allValuesCount = await postsCollection.countDocuments({
+    const allValuesCount = await PostsSchema.countDocuments({
       ...searchByPart,
     });
 
-    // TODO add ESLINT!!!!
-    const limitedValues = await postsCollection
-      .find(searchByPart, { projection, sort, skip })
+    const limitedValues = await PostsSchema.find(searchByPart, null, {
+      skip: skip(pageNumber, pageSize),
+    })
+      .sort(sort)
       .limit(pageSize)
-      .toArray();
+      .lean();
 
     const pagesCount =
       allValuesCount < pageSize ? 1 : Math.ceil(allValuesCount / pageSize);
@@ -51,18 +36,19 @@ export const postsDataAccessLayer = {
   },
 
   async getById(id: string) {
-    const result = await postsCollection.findOne({ id }, { projection });
+    try {
+      const result = await PostsSchema.findById(id);
 
-    if (result) {
-      return result;
+      if (result) {
+        return result;
+      }
+      return false;
+    } catch (error) {
+      return false;
     }
-    return false;
   },
-  async getByMongoId(mongoId: ObjectId) {
-    const result = await postsCollection.findOne(
-      { _id: mongoId },
-      { projection }
-    );
+  async getByMongoId(mongoId: string) {
+    const result = await PostsSchema.findOne({ _id: mongoId });
 
     if (result) {
       return result;
@@ -72,16 +58,16 @@ export const postsDataAccessLayer = {
 
   async deleteById(id: string) {
     try {
-      return await postsCollection.deleteOne({ id });
+      return await PostsSchema.deleteOne({ _id: id });
     } catch (error) {
       console.log(error);
       return null;
     }
   },
 
-  async addPost(newPost: Posts) {
+  async addPost(newPost: any) {
     try {
-      return await postsCollection.insertOne(newPost);
+      return await PostsSchema.create(newPost);
     } catch (error) {
       console.log(error);
       return null;
@@ -99,8 +85,8 @@ export const postsDataAccessLayer = {
     }
   ) {
     try {
-      return await postsCollection.findOneAndUpdate(
-        { id: postId },
+      return await PostsSchema.findByIdAndUpdate(
+        { _id: postId },
         { $push: { comments: newComment } },
         { returnDocument: "after" }
       );
@@ -112,8 +98,8 @@ export const postsDataAccessLayer = {
 
   async updatePost(post: InputAddPost, id: string) {
     try {
-      return await postsCollection.updateOne(
-        { id },
+      return await PostsSchema.updateOne(
+        { _id: id },
         {
           $set: {
             ...post,
@@ -127,12 +113,12 @@ export const postsDataAccessLayer = {
   },
 
   async removeAllPosts() {
-    await postsCollection.deleteMany({});
+    await PostsSchema.deleteMany({});
   },
 
   async deleteComment(id: string) {
     try {
-      return await postsCollection.findOneAndUpdate(
+      return await PostsSchema.findOneAndUpdate(
         { comments: { $elemMatch: { id } } },
         { $pull: { comments: { id } } }
         // { returnDocument: "after" }
@@ -145,7 +131,7 @@ export const postsDataAccessLayer = {
 
   async updateComment(id: string, content: string) {
     try {
-      return await postsCollection.updateOne(
+      return await PostsSchema.updateOne(
         { comments: { $elemMatch: { id } } },
         { $set: { "comments.$.content": content } }
         // { returnDocument: "after" }

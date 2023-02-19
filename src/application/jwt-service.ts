@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
-import { ObjectId } from "mongodb";
-import { TAddUser } from "../types/types";
+// import { ObjectId } from "mongodb";
+// import { TAddUser } from "../types/types";
 
 // const JWT_SECRET =
 //   process.env.JWT_SECRET ||
@@ -8,19 +8,15 @@ import { TAddUser } from "../types/types";
 
 export const jwtService = {
   // TODO fix user
-  createJWT(
-    user: TAddUser & { _id: ObjectId },
-    time: string,
-    JWT_SECRET: string
-  ) {
+  createJWT(user: any, time: string, JWT_SECRET: string) {
     // eslint-disable-next-line no-underscore-dangle
-    const token = jwt.sign({ id: user._id }, JWT_SECRET, {
+    const token = jwt.sign({ id: user._id.toString() }, JWT_SECRET, {
       expiresIn: time,
     });
     return token;
   },
   createJWTrefresh(
-    user: { _id: ObjectId; deviceId: string },
+    user: { _id: any; deviceId: string },
     time: string,
     JWT_SECRET: string
   ) {

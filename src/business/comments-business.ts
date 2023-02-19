@@ -5,7 +5,7 @@ export const commentsBusinessLogicLayer = {
   async deleteById(id: string) {
     const result = await postsDataAccessLayer.deleteComment(id);
 
-    const isDeleted = result ? result?.lastErrorObject?.updatedExisting : null;
+    const isDeleted = result ? true : null;
     if (isDeleted) {
       return true;
     }

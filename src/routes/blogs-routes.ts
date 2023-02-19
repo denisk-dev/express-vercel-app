@@ -1,4 +1,5 @@
 import { Router, Request, Response } from "express";
+import { isValidObjectId } from "mongoose";
 import { auth } from "../middlewares/auth-basic";
 
 import {
@@ -59,6 +60,7 @@ router.get(
 router.post(
   "/",
   [auth, ...validateBlog, sendErrorsIfThereAreAny],
+
   async (
     req: Request<
       {},
@@ -79,7 +81,10 @@ router.post(
       // TODO maybe this should be in the Business layer???
       const blog = await blogsDataAccessLayer.getByMongoId(newlyAddedId);
 
-      return res.status(201).send(blog);
+      if (blog) {
+        return res.status(201).send(blog);
+      }
+      return res.sendStatus(500);
     }
 
     return res.sendStatus(500);
@@ -89,13 +94,16 @@ router.post(
 router.get("/:id", async (req: Request, res: Response) => {
   const { id } = req.params;
 
+  if (!isValidObjectId(id)) {
+    return res.sendStatus(404);
+  }
+
   const blog = await blogsDataAccessLayer.getById(id);
 
   if (blog) {
-    res.send(blog);
-  } else {
-    res.sendStatus(404);
+    return res.send(blog);
   }
+  return res.sendStatus(404);
 });
 
 router.put(
@@ -185,7 +193,10 @@ router.post(
       );
 
       if (newlyAddedId) {
-        const post = await postsDataAccessLayer.getByMongoId(newlyAddedId);
+        const post = await postsDataAccessLayer.getByMongoId(
+          // eslint-disable-next-line no-underscore-dangle
+          newlyAddedId._id.toString()
+        );
 
         return res.status(201).send(post);
       }

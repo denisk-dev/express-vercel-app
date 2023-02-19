@@ -1,11 +1,10 @@
-import { ObjectId } from "mongodb";
-import { usersCollection } from "../db/db";
+import UsersSchema from "../models/Users";
 
 export const securityDataAccessLayer = {
   async removeAllDevices(userId: string, deviceId: string) {
     try {
-      return await usersCollection.updateMany(
-        { _id: new ObjectId(userId) },
+      return await UsersSchema.updateMany(
+        { _id: userId },
         { $pull: { refreshTokensMeta: { deviceId: { $ne: deviceId } } } }
       );
     } catch (e) {
@@ -16,8 +15,8 @@ export const securityDataAccessLayer = {
 
   async removeDevice(id: string, deviceId: string) {
     try {
-      return await usersCollection.updateOne(
-        { _id: new ObjectId(id) },
+      return await UsersSchema.updateOne(
+        { _id: id },
         { $pull: { refreshTokensMeta: { deviceId } } }
       );
     } catch (e) {

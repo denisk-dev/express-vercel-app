@@ -1,9 +1,9 @@
 import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
-import { ObjectId } from "mongodb";
 import jwt from "jsonwebtoken";
 import add from "date-fns/add";
 import isBefore from "date-fns/isBefore";
+import isEqual from "date-fns/isEqual";
 
 import { queryRepo } from "../repositories/query-repo";
 import { jwtService } from "../application/jwt-service";
@@ -11,7 +11,7 @@ import { usersDataAccessLayer } from "../repositories/users-repo";
 import { emailManager } from "../manager/email-manager";
 import { TAddUser } from "../types/types";
 
-//TODO put the secret keys in one place
+// TODO put the secret keys in one place
 const JWT_SECRET =
   process.env.JWT_SECRET ||
   "ro-32-character-ultra-secure-and-ultra-long-secret";
@@ -32,10 +32,12 @@ export const authBusinessLogicLayer = {
 
     const { id, deviceId, iat } = tokenContent;
 
-    const existingUser = await queryRepo.getUserByMongoId(new ObjectId(id));
+    const existingUser = await queryRepo.getUserByMongoId(id);
 
     const isExistingDevice = existingUser?.refreshTokensMeta?.filter(
-      (e) => e.deviceId === deviceId && e.lastActiveDate === iat
+      (e) =>
+        e.deviceId === deviceId &&
+        isEqual(e.lastActiveDate, new Date(iat * 1000))
     );
 
     if (
@@ -60,13 +62,13 @@ export const authBusinessLogicLayer = {
 
       const result = await usersDataAccessLayer.findOneAndExpireRefreshToken(
         // eslint-disable-next-line no-underscore-dangle
-        existingUser._id,
+        existingUser._id.toString(),
         deviceId,
-        iat,
-        newiat
+        new Date(iat * 1000),
+        new Date(newiat * 1000)
       );
 
-      if (!result?.value) return false;
+      if (!result) return false;
 
       return { accessToken: newAccessToken, refreshToken: newRefreshToken };
     }
@@ -92,7 +94,7 @@ export const authBusinessLogicLayer = {
 
     const { id, deviceId } = tokenContent;
 
-    const existingUser = await queryRepo.getUserByMongoId(new ObjectId(id));
+    const existingUser = await queryRepo.getUserByMongoId(id);
 
     if (!existingUser) return false;
 
@@ -129,7 +131,7 @@ export const authBusinessLogicLayer = {
 
         const refreshToken = jwtService.createJWTrefresh(
           // eslint-disable-next-line no-underscore-dangle
-          { _id: result._id, deviceId },
+          { _id: result._id.toString(), deviceId },
           "20000",
           "ro-32-character-ultra-secure-and-ultra-long-secret"
         );
@@ -139,14 +141,14 @@ export const authBusinessLogicLayer = {
         const resultOfAddedTokenMetadata =
           await usersDataAccessLayer.findOneAndAddTokenMetaData(
             // eslint-disable-next-line no-underscore-dangle
-            result._id,
+            result._id.toString(),
             ip,
             useragent,
             iat,
             devid
           );
 
-        if (resultOfAddedTokenMetadata?.lastErrorObject?.updatedExisting) {
+        if (resultOfAddedTokenMetadata) {
           return { accessToken, refreshToken };
         }
         return false;
@@ -234,21 +236,59 @@ export const authBusinessLogicLayer = {
       existingUser.accountData.email
     );
 
-    if (
-      result?.value === null ||
-      result?.value === undefined ||
-      result?.ok === 0
-    ) {
+    if (!result) {
       return false;
     }
 
     try {
-      await emailManager.sendRecoveryMessage(result?.value);
+      await emailManager.sendRecoveryMessage(result);
     } catch (error) {
       // probably a right thing to do
       // const deletedResult = await usersDataAccessLayer.deleteUser(user);
       return null;
     }
+
+    return true;
+  },
+
+  async passwordRecoveryEmail(email: string) {
+    const existingUser = await queryRepo.findUser(email);
+
+    if (!existingUser) return false;
+
+    const recoveryCode = uuidv4();
+
+    const result = await usersDataAccessLayer.findUserAndUpdatePasswordReset(
+      // eslint-disable-next-line no-underscore-dangle
+      existingUser._id.toString(),
+      recoveryCode
+    );
+
+    if (!result) return false;
+
+    try {
+      await emailManager.sendPasswordRecoveryMessage(
+        existingUser.accountData.email,
+        recoveryCode
+      );
+
+      return true;
+    } catch (error) {
+      // probably a right thing to do
+      // const deletedResult = await usersDataAccessLayer.deleteUser(user);
+      return null;
+    }
+  },
+
+  async updatePassword(newPassword: string, recoveryCode: string) {
+    const passwordHash = await bcrypt.hash(newPassword, 13);
+
+    const result = await queryRepo.findUserByPasswordRecoveryCode(
+      recoveryCode,
+      passwordHash
+    );
+    console.log(result, "resukt");
+    if (!result) return false;
 
     return true;
   },

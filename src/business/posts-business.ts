@@ -23,8 +23,8 @@ export const postsBusinessLogicLayer = {
       newComment
     );
 
-    if (result && result.value) {
-      return result.value?.comments?.[result.value.comments.length - 1];
+    if (result) {
+      return result.comments?.[result.comments.length - 1];
     }
     return false;
   },
@@ -50,17 +50,13 @@ export const postsBusinessLogicLayer = {
     const newPost = {
       ...post,
       blogName,
-      id: uuidv4(),
-      createdAt: new Date(),
       comments: [],
     };
 
     const result = await postsDataAccessLayer.addPost(newPost);
 
     if (result) {
-      const { insertedId } = result;
-
-      return insertedId;
+      return result;
     }
 
     return null;

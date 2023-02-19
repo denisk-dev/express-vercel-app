@@ -1,5 +1,6 @@
-import { ObjectId } from "mongodb";
-import { usersCollection, postsCollection } from "../db/db";
+import { skip, getSortBy } from "../utils/pagination";
+import UsersSchema from "../models/Users";
+import PostsSchema from "../models/Posts";
 
 // TODO read only stuff are supposed to be here
 
@@ -34,18 +35,16 @@ export const queryRepo = {
       ? { "accountData.email": { $regex: searchEmailTerm, $options: "i" } }
       : {};
 
-    const sort: any = {};
-    if (sortBy && sortDirection) {
-      sort[sortBy] = sortDirection === "desc" ? -1 : 1;
-    }
+    const sort = getSortBy(sortDirection, sortBy);
 
-    const skip = pageNumber > 0 ? (pageNumber - 1) * pageSize : 0;
-
-    const cursor = usersCollection.find(
+    const allValues = await UsersSchema.find(
       { $or: [{ ...searchEmail }, { ...searchLogin }] },
-      { sort, skip, limit: pageSize }
-    );
-    const allValues = await cursor.toArray();
+      null,
+      { skip: skip(pageNumber, pageSize) }
+    )
+      .sort(sort)
+      .limit(pageSize)
+      .lean();
 
     const mappedValues = allValues.map((val) => ({
       login: val?.accountData.userName,
@@ -55,7 +54,7 @@ export const queryRepo = {
       id: val?._id,
     }));
 
-    const allValuesCount = await usersCollection.countDocuments({
+    const allValuesCount = await UsersSchema.countDocuments({
       $or: [{ ...searchEmail }, { ...searchLogin }],
     });
 
@@ -64,9 +63,9 @@ export const queryRepo = {
 
     return { items: mappedValues, pagesCount, totalCount: allValuesCount };
   },
-  async getUserByMongoId(mongoId: ObjectId) {
+  async getUserByMongoId(mongoId: string) {
     try {
-      return await usersCollection.findOne(
+      return await UsersSchema.findOne(
         { _id: mongoId }
         // { projection: { _id: 0 } }
       );
@@ -78,7 +77,7 @@ export const queryRepo = {
 
   async findUser(loginOrEmail: string) {
     try {
-      return await usersCollection.findOne({
+      return await UsersSchema.findOne({
         $or: [
           { "accountData.userName": loginOrEmail },
           { "accountData.email": loginOrEmail },
@@ -91,7 +90,7 @@ export const queryRepo = {
   },
   async findUserByLoginOrEmail(login: string, email: string) {
     try {
-      return await usersCollection.findOne({
+      return await UsersSchema.findOne({
         $or: [
           { "accountData.userName": login },
           { "accountData.email": email },
@@ -110,25 +109,9 @@ export const queryRepo = {
     sortBy: string,
     sortDirection: string
   ) {
-    // TODO how do I sort this one?????????
+    const sort = getSortBy(sortDirection, sortBy);
 
-    // think I might need to do some mongoDB courses and improve my knoledge of aggregation stuff
-
-    // const sort: any = {};
-    // if (sortBy && sortDirection) {
-    //   sort[sortBy] = sortDirection === "desc" ? -1 : 1;
-    // }
-
-    // const skip = pageNumber > 0 ? (pageNumber - 1) * pageSize : 0;
-
-    const sort: any = {};
-    if (sortBy && sortDirection) {
-      sort[sortBy] = sortDirection === "desc" ? -1 : 1;
-    }
-
-    const skip = pageNumber > 0 ? (pageNumber - 1) * pageSize : 0;
-
-    const totalCountArr = await postsCollection.aggregate([
+    const totalCount = await PostsSchema.aggregate([
       {
         $match: {
           id: postId,
@@ -141,7 +124,7 @@ export const queryRepo = {
       },
     ]);
 
-    const resultArr = await postsCollection.aggregate([
+    const result = await PostsSchema.aggregate([
       {
         $match: {
           id: postId,
@@ -163,19 +146,12 @@ export const queryRepo = {
         $sort: sort,
       },
       {
-        $skip: skip,
+        $skip: skip(pageNumber, pageSize),
       },
       {
         $limit: pageSize,
       },
     ]);
-
-    const totalCount = await totalCountArr.toArray();
-
-    // console.log(totalCount, "totalCount");
-
-    // return result.toArray();
-    const result = await resultArr.toArray();
 
     const pagesCount =
       totalCount.length < pageSize
@@ -199,7 +175,7 @@ export const queryRepo = {
 
   async getCommentById(id: string) {
     try {
-      return await postsCollection.findOne(
+      return await PostsSchema.findOne(
         {
           comments: { $elemMatch: { id } },
         },
@@ -213,7 +189,7 @@ export const queryRepo = {
 
   async findUserByConfirmationCode(code: string) {
     try {
-      return await usersCollection.findOne({
+      return await UsersSchema.findOne({
         "emailConfirmation.confirmationCode": code,
       });
     } catch (error) {
@@ -222,9 +198,29 @@ export const queryRepo = {
     }
   },
 
+  async findUserByPasswordRecoveryCode(code: string, newPassword: string) {
+    try {
+      return await UsersSchema.findOneAndUpdate(
+        {
+          "passwordRecovery.recoveryCode": code,
+        },
+        {
+          $set: {
+            "accountData.passwordHash": newPassword,
+            "passwordRecovery.recoveryCode": "",
+          },
+        },
+        { returnDocument: "after" }
+      );
+    } catch (error) {
+      console.log(error);
+      return null;
+    }
+  },
+
   async findUserByDeviceId(deviceId: string) {
     try {
-      return await usersCollection.findOne({
+      return await PostsSchema.findOne({
         refreshTokensMeta: { $elemMatch: { deviceId } },
       });
     } catch (error) {

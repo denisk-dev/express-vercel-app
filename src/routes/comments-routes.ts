@@ -26,8 +26,8 @@ router.get("/:id", async (req: Request, res: Response) => {
     id: comments.id,
     content: comments.content,
     commentatorInfo: {
-      userId: comments.userId,
-      userLogin: comments.userLogin,
+      userId: comments.commentatorInfo.userId,
+      userLogin: comments.commentatorInfo.userLogin,
     },
     createdAt: comments.createdAt,
   });
@@ -53,7 +53,7 @@ router.put(
     }
 
     // eslint-disable-next-line no-underscore-dangle
-    if (user._id?.toString() !== post?.comments?.[0].userId) {
+    if (user._id?.toString() !== post?.comments?.[0].commentatorInfo.userId) {
       return res.sendStatus(403);
     }
 
@@ -87,7 +87,7 @@ router.delete(
     }
 
     // eslint-disable-next-line no-underscore-dangle
-    if (user._id?.toString() !== post?.comments?.[0].userId) {
+    if (user._id?.toString() !== post?.comments?.[0].commentatorInfo.userId) {
       return res.sendStatus(403);
     }
 
