@@ -2,19 +2,28 @@ import mongoose from "mongoose";
 
 const { Schema } = mongoose;
 
-const usersSchema = new Schema({
-  userId: { type: Schema.Types.ObjectId, ref: "users", required: true },
-  userLogin: { type: String, required: true },
-});
-
-const commentsSchema = new Schema(
+const usersSchema = new Schema(
   {
-    createdAt: { type: Date, default: Date.now },
-    content: { type: String, required: true },
-    commentatorInfo: { type: usersSchema, required: true },
+    userId: { type: Schema.Types.ObjectId, ref: "users", required: true },
+    userLogin: { type: String, required: true },
   },
   { _id: false }
 );
+
+const likesSchema = new Schema(
+  {
+    status: { type: String, enum: ["None", "Like", "Dislike"], required: true },
+    userId: { type: Schema.Types.ObjectId, ref: "users", required: true },
+  },
+  { _id: false }
+);
+
+const commentsSchema = new Schema({
+  createdAt: { type: Date, default: Date.now },
+  content: { type: String, required: true },
+  commentatorInfo: { type: usersSchema, required: true },
+  likes: { type: [likesSchema] },
+});
 
 const postSchema = new Schema(
   {

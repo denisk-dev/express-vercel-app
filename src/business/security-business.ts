@@ -1,13 +1,19 @@
+/* eslint-disable class-methods-use-this */
 import jwt from "jsonwebtoken";
-import { queryRepo } from "../repositories/query-repo";
-import { securityDataAccessLayer } from "../repositories/security-repo";
+import { QueryRepository } from "../repositories/query-repo";
+import { SecurityRepository } from "../repositories/security-repo";
 
 // TODO put the secret keys in one place
 const JWT_SECRET =
   process.env.JWT_SECRET ||
   "ro-32-character-ultra-secure-and-ultra-long-secret";
 
-export const securityBusinessLogicLayer = {
+export class SecurityBusiness {
+  constructor(
+    protected queryRepository: QueryRepository,
+    protected securityRepository: SecurityRepository
+  ) {}
+
   async getAllDevices(cookies: any) {
     const { refreshToken } = cookies;
 
@@ -22,14 +28,14 @@ export const securityBusinessLogicLayer = {
 
     const { id } = tokenContent;
 
-    const existingUser = await queryRepo.getUserByMongoId(id);
+    const existingUser = await this.queryRepository.getUserByMongoId(id);
 
     if (existingUser) {
       return existingUser.refreshTokensMeta;
     }
 
     return false;
-  },
+  }
 
   async removeAllDevices(cookies: any) {
     const { refreshToken } = cookies;
@@ -45,10 +51,10 @@ export const securityBusinessLogicLayer = {
 
     const { id, deviceId } = tokenContent;
 
-    await securityDataAccessLayer.removeAllDevices(id, deviceId);
+    await this.securityRepository.removeAllDevices(id, deviceId);
 
     return true;
-  },
+  }
 
   async removeDevice(cookies: any, deviceId: string) {
     const { refreshToken } = cookies;
@@ -64,7 +70,7 @@ export const securityBusinessLogicLayer = {
 
     const { id } = tokenContent;
 
-    const user = await queryRepo.findUserByDeviceId(deviceId);
+    const user = await this.queryRepository.findUserByDeviceId(deviceId);
 
     if (!user) {
       return 404;
@@ -75,14 +81,14 @@ export const securityBusinessLogicLayer = {
       return 403;
     }
 
-    const result = await securityDataAccessLayer.removeDevice(id, deviceId);
+    const result = await this.securityRepository.removeDevice(id, deviceId);
 
     if (result?.modifiedCount === 1) {
       return 204;
     }
 
     return 404;
-  },
-};
+  }
+}
 
-export default securityBusinessLogicLayer;
+export default SecurityBusiness;

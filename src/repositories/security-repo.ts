@@ -1,6 +1,7 @@
+/* eslint-disable class-methods-use-this */
 import UsersSchema from "../models/Users";
 
-export const securityDataAccessLayer = {
+export class SecurityRepository {
   async removeAllDevices(userId: string, deviceId: string) {
     try {
       return await UsersSchema.updateMany(
@@ -11,7 +12,7 @@ export const securityDataAccessLayer = {
       console.log(e);
       return null;
     }
-  },
+  }
 
   async removeDevice(id: string, deviceId: string) {
     try {
@@ -23,7 +24,7 @@ export const securityDataAccessLayer = {
       console.log(e);
       return null;
     }
-  },
-};
+  }
+}
 
-export default securityDataAccessLayer;
+export default SecurityRepository;

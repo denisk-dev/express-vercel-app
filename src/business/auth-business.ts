@@ -1,3 +1,4 @@
+/* eslint-disable class-methods-use-this */
 import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
 import jwt from "jsonwebtoken";
@@ -5,9 +6,9 @@ import add from "date-fns/add";
 import isBefore from "date-fns/isBefore";
 import isEqual from "date-fns/isEqual";
 
-import { queryRepo } from "../repositories/query-repo";
+import { QueryRepository } from "../repositories/query-repo";
 import { jwtService } from "../application/jwt-service";
-import { usersDataAccessLayer } from "../repositories/users-repo";
+import { UsersRepository } from "../repositories/users-repo";
 import { emailManager } from "../manager/email-manager";
 import { TAddUser } from "../types/types";
 
@@ -17,7 +18,12 @@ const JWT_SECRET =
   "ro-32-character-ultra-secure-and-ultra-long-secret";
 
 // CUD only
-export const authBusinessLogicLayer = {
+export class AuthBusiness {
+  constructor(
+    protected queryRepository: QueryRepository,
+    protected userRepository: UsersRepository
+  ) {}
+
   async refreshToken(cookies: any) {
     const { refreshToken } = cookies;
 
@@ -32,7 +38,7 @@ export const authBusinessLogicLayer = {
 
     const { id, deviceId, iat } = tokenContent;
 
-    const existingUser = await queryRepo.getUserByMongoId(id);
+    const existingUser = await this.queryRepository.getUserByMongoId(id);
 
     const isExistingDevice = existingUser?.refreshTokensMeta?.filter(
       (e) =>
@@ -47,7 +53,7 @@ export const authBusinessLogicLayer = {
     ) {
       const newAccessToken = jwtService.createJWT(
         existingUser,
-        "10000",
+        "420000",
         "my-32-character-ultra-secure-and-ultra-long-secret"
       );
 
@@ -60,7 +66,7 @@ export const authBusinessLogicLayer = {
 
       const { iat: newiat } = jwt.decode(newRefreshToken) as any;
 
-      const result = await usersDataAccessLayer.findOneAndExpireRefreshToken(
+      const result = await this.userRepository.findOneAndExpireRefreshToken(
         // eslint-disable-next-line no-underscore-dangle
         existingUser._id.toString(),
         deviceId,
@@ -74,7 +80,7 @@ export const authBusinessLogicLayer = {
     }
 
     return false;
-  },
+  }
 
   async logout(cookies: any) {
     const { refreshToken } = cookies;
@@ -94,17 +100,17 @@ export const authBusinessLogicLayer = {
 
     const { id, deviceId } = tokenContent;
 
-    const existingUser = await queryRepo.getUserByMongoId(id);
+    const existingUser = await this.queryRepository.getUserByMongoId(id);
 
     if (!existingUser) return false;
 
-    const result = await usersDataAccessLayer.deleteDeviceSession(id, deviceId);
+    const result = await this.userRepository.deleteDeviceSession(id, deviceId);
 
     if (result?.modifiedCount === 1) {
       return true;
     }
     return false;
-  },
+  }
 
   async login(
     loginOrEmail: string,
@@ -112,7 +118,7 @@ export const authBusinessLogicLayer = {
     ip: string,
     useragent: any
   ) {
-    const result = await queryRepo.findUser(loginOrEmail);
+    const result = await this.queryRepository.findUser(loginOrEmail);
 
     if (result && result.emailConfirmation.isConfirmed) {
       const isValid = await bcrypt.compare(
@@ -125,7 +131,7 @@ export const authBusinessLogicLayer = {
       if (isValid) {
         const accessToken = jwtService.createJWT(
           result,
-          "10000",
+          "420000",
           "my-32-character-ultra-secure-and-ultra-long-secret"
         );
 
@@ -139,7 +145,7 @@ export const authBusinessLogicLayer = {
         const { iat, deviceId: devid } = jwt.decode(refreshToken) as any;
 
         const resultOfAddedTokenMetadata =
-          await usersDataAccessLayer.findOneAndAddTokenMetaData(
+          await this.userRepository.findOneAndAddTokenMetaData(
             // eslint-disable-next-line no-underscore-dangle
             result._id.toString(),
             ip,
@@ -156,12 +162,12 @@ export const authBusinessLogicLayer = {
     }
 
     return false;
-  },
+  }
 
   async registration(email: string, password: string, login: string) {
-    const userByLoginExists = await queryRepo.findUser(login);
+    const userByLoginExists = await this.queryRepository.findUser(login);
 
-    const userByEmailExists = await queryRepo.findUser(email);
+    const userByEmailExists = await this.queryRepository.findUser(email);
 
     if (userByLoginExists) {
       return { isSuccessful: false, type: "login" };
@@ -187,21 +193,21 @@ export const authBusinessLogicLayer = {
       },
     };
 
-    await usersDataAccessLayer.addUser(user);
+    await this.userRepository.addUser(user);
 
     try {
       await emailManager.sendRecoveryMessage(user);
     } catch (error) {
       // probably a right thing to do
-      // const deletedResult = await usersDataAccessLayer.deleteUser(user);
+      // const deletedResult = await this.userRepository.deleteUser(user);
       return null;
     }
 
     return { isSuccessful: true };
-  },
+  }
 
   async registrationConfirmation(code: string) {
-    const result = await queryRepo.findUserByConfirmationCode(code);
+    const result = await this.queryRepository.findUserByConfirmationCode(code);
 
     if (!result) return false;
 
@@ -214,12 +220,12 @@ export const authBusinessLogicLayer = {
 
     if (!isNotExpired) return false;
 
-    await usersDataAccessLayer.confirmRegistration(code);
+    await this.userRepository.confirmRegistration(code);
     return true;
-  },
+  }
 
   async registrationEmailResending(email: string) {
-    const existingUser = await queryRepo.findUser(email);
+    const existingUser = await this.queryRepository.findUser(email);
 
     if (!existingUser) return false;
 
@@ -232,7 +238,7 @@ export const authBusinessLogicLayer = {
 
     if (existingUser?.emailConfirmation.isConfirmed) return false;
 
-    const result = await usersDataAccessLayer.changeConfirmationCode(
+    const result = await this.userRepository.changeConfirmationCode(
       existingUser.accountData.email
     );
 
@@ -244,21 +250,21 @@ export const authBusinessLogicLayer = {
       await emailManager.sendRecoveryMessage(result);
     } catch (error) {
       // probably a right thing to do
-      // const deletedResult = await usersDataAccessLayer.deleteUser(user);
+      // const deletedResult = await this.userRepository.deleteUser(user);
       return null;
     }
 
     return true;
-  },
+  }
 
   async passwordRecoveryEmail(email: string) {
-    const existingUser = await queryRepo.findUser(email);
+    const existingUser = await this.queryRepository.findUser(email);
 
     if (!existingUser) return false;
 
     const recoveryCode = uuidv4();
 
-    const result = await usersDataAccessLayer.findUserAndUpdatePasswordReset(
+    const result = await this.userRepository.findUserAndUpdatePasswordReset(
       // eslint-disable-next-line no-underscore-dangle
       existingUser._id.toString(),
       recoveryCode
@@ -275,15 +281,15 @@ export const authBusinessLogicLayer = {
       return true;
     } catch (error) {
       // probably a right thing to do
-      // const deletedResult = await usersDataAccessLayer.deleteUser(user);
+      // const deletedResult = await this.userRepository.deleteUser(user);
       return null;
     }
-  },
+  }
 
   async updatePassword(newPassword: string, recoveryCode: string) {
     const passwordHash = await bcrypt.hash(newPassword, 13);
 
-    const result = await queryRepo.findUserByPasswordRecoveryCode(
+    const result = await this.queryRepository.findUserByPasswordRecoveryCode(
       recoveryCode,
       passwordHash
     );
@@ -291,7 +297,7 @@ export const authBusinessLogicLayer = {
     if (!result) return false;
 
     return true;
-  },
-};
+  }
+}
 
-export default authBusinessLogicLayer;
+export default AuthBusiness;

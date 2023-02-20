@@ -1,10 +1,11 @@
+/* eslint-disable class-methods-use-this */
 import { InputAddPost } from "../types/types";
 import { skip, getSortBy } from "../utils/pagination";
 import PostsSchema from "../models/Posts";
 
 // TODO add eslint, why is not getting highlighted?????
 
-export const postsDataAccessLayer = {
+export class PostsRepository {
   async findPosts(
     searchNameTerm: string | null,
     pageSize: number,
@@ -33,7 +34,7 @@ export const postsDataAccessLayer = {
       allValuesCount < pageSize ? 1 : Math.ceil(allValuesCount / pageSize);
 
     return { items: limitedValues, totalCount: allValuesCount, pagesCount };
-  },
+  }
 
   async getById(id: string) {
     try {
@@ -46,7 +47,8 @@ export const postsDataAccessLayer = {
     } catch (error) {
       return false;
     }
-  },
+  }
+
   async getByMongoId(mongoId: string) {
     const result = await PostsSchema.findOne({ _id: mongoId });
 
@@ -54,7 +56,7 @@ export const postsDataAccessLayer = {
       return result;
     }
     return false;
-  },
+  }
 
   async deleteById(id: string) {
     try {
@@ -63,7 +65,7 @@ export const postsDataAccessLayer = {
       console.log(error);
       return null;
     }
-  },
+  }
 
   async addPost(newPost: any) {
     try {
@@ -72,29 +74,29 @@ export const postsDataAccessLayer = {
       console.log(error);
       return null;
     }
-  },
+  }
 
   async findOneAndUpdateComment(
     postId: string,
-    newComment: {
-      content: string;
-      userLogin: string;
-      userId: string;
-      createdAt: Date;
-      id: string;
-    }
+    content: string,
+    userLogin: string,
+    userId: string
   ) {
     try {
       return await PostsSchema.findByIdAndUpdate(
         { _id: postId },
-        { $push: { comments: newComment } },
+        {
+          $push: {
+            comments: { commentatorInfo: { userLogin, userId }, content },
+          },
+        },
         { returnDocument: "after" }
       );
     } catch (error) {
       console.log(error);
       return null;
     }
-  },
+  }
 
   async updatePost(post: InputAddPost, id: string) {
     try {
@@ -110,29 +112,29 @@ export const postsDataAccessLayer = {
       console.log(error);
       return null;
     }
-  },
+  }
 
   async removeAllPosts() {
     await PostsSchema.deleteMany({});
-  },
+  }
 
   async deleteComment(id: string) {
     try {
       return await PostsSchema.findOneAndUpdate(
-        { comments: { $elemMatch: { id } } },
-        { $pull: { comments: { id } } }
-        // { returnDocument: "after" }
+        { comments: { $elemMatch: { _id: id } } },
+        { $pull: { comments: { _id: id } } },
+        { returnDocument: "after" }
       );
     } catch (error) {
       console.log(error);
       return null;
     }
-  },
+  }
 
   async updateComment(id: string, content: string) {
     try {
       return await PostsSchema.updateOne(
-        { comments: { $elemMatch: { id } } },
+        { comments: { $elemMatch: { _id: id } } },
         { $set: { "comments.$.content": content } }
         // { returnDocument: "after" }
       );
@@ -140,7 +142,7 @@ export const postsDataAccessLayer = {
       console.log(error);
       return null;
     }
-  },
-};
+  }
+}
 
-export default postsDataAccessLayer;
+export default PostsRepository;

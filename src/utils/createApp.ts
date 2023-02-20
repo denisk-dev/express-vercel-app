@@ -7,10 +7,14 @@ import posts from "../routes/posts-routes";
 import users from "../routes/users-routes";
 import auth from "../routes/auth-routes";
 import comments from "../routes/comments-routes";
-import { blogsDataAccessLayer } from "../repositories/blogs-repo";
-import { postsDataAccessLayer } from "../repositories/posts-repo";
-import { usersDataAccessLayer } from "../repositories/users-repo";
+import { BlogsRepository } from "../repositories/blogs-repo";
+import { PostsRepository } from "../repositories/posts-repo";
+import { UsersRepository } from "../repositories/users-repo";
 import security from "../routes/security-routes";
+
+const blogsRepository = new BlogsRepository();
+const postsRepository = new PostsRepository();
+const userRepository = new UsersRepository();
 
 const createServer = () => {
   const app = express();
@@ -28,9 +32,9 @@ const createServer = () => {
   app.use("/security", security);
 
   app.delete("/testing/all-data", async (req, res) => {
-    await blogsDataAccessLayer.removeAllBlogs();
-    await postsDataAccessLayer.removeAllPosts();
-    await usersDataAccessLayer.removeAllUsers();
+    await blogsRepository.removeAllBlogs();
+    await postsRepository.removeAllPosts();
+    await userRepository.removeAllUsers();
     res.sendStatus(204);
   });
 

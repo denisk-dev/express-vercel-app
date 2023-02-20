@@ -1,7 +1,9 @@
 import { body, validationResult, query, param } from "express-validator";
 
 import { NextFunction, Request, Response } from "express";
-import { blogsDataAccessLayer } from "../repositories/blogs-repo";
+import { BlogsRepository } from "../repositories/blogs-repo";
+
+const blogsRepository = new BlogsRepository();
 
 export const validateBlog = [
   body("name").isString().trim().isLength({ min: 3, max: 15 }),
@@ -47,7 +49,7 @@ export const validateBlogIdBody = body("blogId")
   .trim()
   .isString()
   .custom(async (input) => {
-    const existingBlog = await blogsDataAccessLayer.getById(input);
+    const existingBlog = await blogsRepository.getById(input);
 
     if (!existingBlog) {
       throw new Error("somethiw wrong with blogId");

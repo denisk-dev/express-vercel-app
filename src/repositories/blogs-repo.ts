@@ -1,3 +1,4 @@
+/* eslint-disable class-methods-use-this */
 import BlogSchema from "../models/Blogs";
 import PostsSchema from "../models/Posts";
 import { InputAddBlog } from "../types/types";
@@ -5,7 +6,7 @@ import { skip, getSortBy } from "../utils/pagination";
 
 // TODO MOVE ALL OF THE GET REQUESTS TO QUERY REPO, HERE IS CUD ONLY
 
-export const blogsDataAccessLayer = {
+export class BlogsRepository {
   async findBlogs(
     searchNameTerm: string | null,
     pageSize: number,
@@ -34,7 +35,7 @@ export const blogsDataAccessLayer = {
       allValuesCount < pageSize ? 1 : Math.ceil(allValuesCount / pageSize);
 
     return { items: limitedValues, totalCount: allValuesCount, pagesCount };
-  },
+  }
 
   async getById(id: string) {
     const result = await BlogSchema.findById(id);
@@ -43,7 +44,8 @@ export const blogsDataAccessLayer = {
       return result;
     }
     return false;
-  },
+  }
+
   async getByMongoId(mongoId: string) {
     const result = await BlogSchema.findOne({ _id: mongoId }).lean();
 
@@ -51,7 +53,7 @@ export const blogsDataAccessLayer = {
       return result;
     }
     return false;
-  },
+  }
 
   async deleteById(id: string) {
     try {
@@ -60,7 +62,7 @@ export const blogsDataAccessLayer = {
       console.log(error);
       return null;
     }
-  },
+  }
 
   async addBlog(blog: InputAddBlog) {
     try {
@@ -78,7 +80,7 @@ export const blogsDataAccessLayer = {
     } catch (error) {
       return null;
     }
-  },
+  }
 
   async updateBlog(id: string, blog: InputAddBlog) {
     try {
@@ -94,11 +96,11 @@ export const blogsDataAccessLayer = {
       console.log(error);
       return null;
     }
-  },
+  }
 
   async removeAllBlogs() {
     await BlogSchema.deleteMany({});
-  },
+  }
 
   async findPostsForSpecificBlog(
     pageSize: number,
@@ -125,7 +127,7 @@ export const blogsDataAccessLayer = {
       allValuesCount < pageSize ? 1 : Math.ceil(allValuesCount / pageSize);
 
     return { items: allValues, totalCount: allValuesCount, pagesCount };
-  },
-};
+  }
+}
 
-export default blogsDataAccessLayer;
+export default BlogsRepository;

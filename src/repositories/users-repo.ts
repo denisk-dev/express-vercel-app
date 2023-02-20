@@ -1,8 +1,9 @@
+/* eslint-disable class-methods-use-this */
 import { v4 as uuidv4 } from "uuid";
 import { TAddUser } from "../types/types";
 import UsersSchema from "../models/Users";
 
-export const usersDataAccessLayer = {
+export class UsersRepository {
   async addUser(props: TAddUser) {
     try {
       return await UsersSchema.create({
@@ -12,7 +13,8 @@ export const usersDataAccessLayer = {
       console.log(error);
       return null;
     }
-  },
+  }
+
   async deleteUser(id: string) {
     // let _id = ObjectId(id);
     try {
@@ -21,7 +23,7 @@ export const usersDataAccessLayer = {
       console.log(e);
       return null;
     }
-  },
+  }
 
   async deleteDeviceSession(id: string, deviceId: string) {
     try {
@@ -33,11 +35,11 @@ export const usersDataAccessLayer = {
       console.log(e);
       return null;
     }
-  },
+  }
 
   async removeAllUsers() {
     await UsersSchema.deleteMany({});
-  },
+  }
 
   async confirmRegistration(code: string) {
     try {
@@ -51,7 +53,7 @@ export const usersDataAccessLayer = {
       console.log(error);
       return null;
     }
-  },
+  }
 
   async changeConfirmationCode(email: string) {
     try {
@@ -66,7 +68,7 @@ export const usersDataAccessLayer = {
       console.log(error);
       return null;
     }
-  },
+  }
 
   async findOneAndExpireRefreshToken(
     id: string,
@@ -92,7 +94,7 @@ export const usersDataAccessLayer = {
       console.log(error);
       return null;
     }
-  },
+  }
 
   async findOneAndAddTokenMetaData(
     id: string,
@@ -121,7 +123,7 @@ export const usersDataAccessLayer = {
       console.log(error);
       return null;
     }
-  },
+  }
 
   async findUserAndUpdatePasswordReset(id: string, recoveryCode: string) {
     try {
@@ -140,7 +142,7 @@ export const usersDataAccessLayer = {
       console.log(error);
       return null;
     }
-  },
-};
+  }
+}
 
-export default usersDataAccessLayer;
+export default UsersRepository;

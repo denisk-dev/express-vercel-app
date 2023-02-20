@@ -1,3 +1,5 @@
+/* eslint-disable class-methods-use-this */
+import { ObjectId } from "mongodb";
 import { skip, getSortBy } from "../utils/pagination";
 import UsersSchema from "../models/Users";
 import PostsSchema from "../models/Posts";
@@ -18,7 +20,7 @@ import PostsSchema from "../models/Posts";
 
 // TODO make sure Repository (READ) operators are done in the Presentation layer
 
-export const queryRepo = {
+export class QueryRepository {
   async getUsers(
     searchLoginTerm: string | null,
     searchEmailTerm: string | null,
@@ -62,7 +64,8 @@ export const queryRepo = {
       allValuesCount < pageSize ? 1 : Math.ceil(allValuesCount / pageSize);
 
     return { items: mappedValues, pagesCount, totalCount: allValuesCount };
-  },
+  }
+
   async getUserByMongoId(mongoId: string) {
     try {
       return await UsersSchema.findOne(
@@ -73,7 +76,7 @@ export const queryRepo = {
       console.log(error);
       return null;
     }
-  },
+  }
 
   async findUser(loginOrEmail: string) {
     try {
@@ -87,7 +90,8 @@ export const queryRepo = {
       console.log(error);
       return null;
     }
-  },
+  }
+
   async findUserByLoginOrEmail(login: string, email: string) {
     try {
       return await UsersSchema.findOne({
@@ -100,7 +104,7 @@ export const queryRepo = {
       console.log(error);
       return null;
     }
-  },
+  }
 
   async getCommentsForSpecifiedPost(
     postId: string,
@@ -171,21 +175,41 @@ export const queryRepo = {
       totalCount: totalCount.length,
       pagesCount,
     };
-  },
+  }
 
   async getCommentById(id: string) {
     try {
-      return await PostsSchema.findOne(
+      return await PostsSchema.aggregate([
         {
-          comments: { $elemMatch: { id } },
+          $match: {
+            comments: {
+              $elemMatch: {
+                _id: new ObjectId(id),
+              },
+            },
+          },
         },
-        { projection: { comments: { $elemMatch: { id } } } }
-      );
+        {
+          $unwind: {
+            path: "$comments",
+          },
+        },
+        {
+          $match: {
+            "comments._id": new ObjectId(id),
+          },
+        },
+        {
+          $project: {
+            comments: 1,
+          },
+        },
+      ]);
     } catch (error) {
       console.log(error);
       return null;
     }
-  },
+  }
 
   async findUserByConfirmationCode(code: string) {
     try {
@@ -196,7 +220,7 @@ export const queryRepo = {
       console.log(error);
       return null;
     }
-  },
+  }
 
   async findUserByPasswordRecoveryCode(code: string, newPassword: string) {
     try {
@@ -216,7 +240,7 @@ export const queryRepo = {
       console.log(error);
       return null;
     }
-  },
+  }
 
   async findUserByDeviceId(deviceId: string) {
     try {
@@ -227,7 +251,7 @@ export const queryRepo = {
       console.log(error);
       return null;
     }
-  },
-};
+  }
+}
 
-export default queryRepo;
+export default QueryRepository;

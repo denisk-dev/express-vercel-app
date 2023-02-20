@@ -1,12 +1,21 @@
+/* eslint-disable class-methods-use-this */
 import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
-import { usersDataAccessLayer } from "../repositories/users-repo";
-import { queryRepo } from "../repositories/query-repo";
+import { UsersRepository } from "../repositories/users-repo";
+import { QueryRepository } from "../repositories/query-repo";
 
 // CUD only
-export const usersBusinessLogicLayer = {
+export class UsersBusiness {
+  constructor(
+    protected queryRepository: QueryRepository,
+    protected userRepository: UsersRepository
+  ) {}
+
   async addNewUser(login: string, password: string, email: string) {
-    const user = await queryRepo.findUserByLoginOrEmail(login, email);
+    const user = await this.queryRepository.findUserByLoginOrEmail(
+      login,
+      email
+    );
 
     if (user) {
       return false;
@@ -16,7 +25,7 @@ export const usersBusinessLogicLayer = {
     const hash = await bcrypt.hash(password, 13);
 
     // TODO I think I need to create a way to check if the same login/email doesn't exist
-    const result = await usersDataAccessLayer.addUser({
+    const result = await this.userRepository.addUser({
       accountData: {
         userName: login,
         email,
@@ -42,16 +51,17 @@ export const usersBusinessLogicLayer = {
     }
 
     return false;
-  },
+  }
+
   async deleteUserById(id: string) {
-    const result = await usersDataAccessLayer.deleteUser(id);
+    const result = await this.userRepository.deleteUser(id);
 
     if (result && result.deletedCount === 1) {
       return true;
     }
 
     return false;
-  },
-};
+  }
+}
 
-export default usersBusinessLogicLayer;
+export default UsersBusiness;

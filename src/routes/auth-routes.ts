@@ -1,4 +1,5 @@
-import { Router, Request, Response } from "express";
+/* eslint-disable class-methods-use-this */
+import { Router } from "express";
 import { getApiLimiter } from "../utils/getApiLimiter";
 import { auth } from "../middlewares/auth";
 import {
@@ -10,186 +11,51 @@ import {
   validateNewPassword,
 } from "../middlewares/input-validation";
 
-import { authBusinessLogicLayer } from "../business/auth-business";
+import { authController } from "../composition/auth";
 
 const router = Router();
 
-router.post("/refresh-token", async (req: Request, res: Response) => {
-  const result = await authBusinessLogicLayer.refreshToken(req.cookies);
-
-  if (result) {
-    res.cookie("refreshToken", result.refreshToken, {
-      httpOnly: true,
-      secure: true,
-    });
-    return res.status(200).send({ accessToken: result.accessToken });
-  }
-  return res.sendStatus(401);
-});
+router.post("/refresh-token", authController.refreshToken.bind(authController));
 
 router.post(
   "/login",
   [getApiLimiter(), ...login, sendErrorsIfThereAreAny],
-  async (req: Request, res: Response) => {
-    // eslint-disable-next-line @typescript-eslint/no-shadow
-    const { loginOrEmail, password } = req.body;
-
-    const token = await authBusinessLogicLayer.login(
-      loginOrEmail,
-      password,
-      req.ip,
-      req.useragent
-    );
-
-    if (token) {
-      res.cookie("refreshToken", token.refreshToken, {
-        httpOnly: true,
-        secure: true,
-      });
-      return res.status(200).send({ accessToken: token.accessToken });
-    }
-
-    return res.sendStatus(401);
-  }
+  authController.login.bind(authController)
 );
 
-router.get("/me", [auth], (req: Request, res: Response) => {
-  // eslint-disable-next-line @typescript-eslint/no-shadow, @typescript-eslint/naming-convention
-  const { accountData, _id } = req.context.user;
-
-  const { email, userName } = accountData;
-
-  res.send({ email, login: userName, userId: _id });
-});
+router.get("/me", [auth], authController.me.bind(authController));
 
 router.post(
   "/password-recovery",
   [getApiLimiter(), validateEmailOnly, sendErrorsIfThereAreAny],
-  async (req: Request, res: Response) => {
-    const { email } = req.body;
-
-    await authBusinessLogicLayer.passwordRecoveryEmail(email);
-
-    return res.sendStatus(204);
-  }
+  authController.passwordRecovery.bind(authController)
 );
 
 router.post(
   "/new-password",
   [getApiLimiter(), ...validateNewPassword, sendErrorsIfThereAreAny],
-  async (req: Request, res: Response) => {
-    const { newPassword, recoveryCode } = req.body;
-
-    const isSent = await authBusinessLogicLayer.updatePassword(
-      newPassword,
-      recoveryCode
-    );
-
-    if (isSent) {
-      return res.sendStatus(204);
-    }
-    return res.status(400).send({
-      errorsMessages: [
-        {
-          message: "Some error",
-          field: "recoveryCode",
-        },
-      ],
-    });
-  }
+  authController.newPassword.bind(authController)
 );
 
 router.post(
   "/registration-confirmation",
   [getApiLimiter(), validateRegistrationCode, sendErrorsIfThereAreAny],
-  async (req: Request, res: Response) => {
-    const { code } = req.body;
-
-    const isVerified = await authBusinessLogicLayer.registrationConfirmation(
-      code
-    );
-
-    if (!isVerified) {
-      return res.status(400).send({
-        errorsMessages: [
-          {
-            message:
-              "confirmation code is incorrect, expired or already been applied",
-            field: "code",
-          },
-        ],
-      });
-    }
-
-    return res.sendStatus(204);
-  }
+  authController.registrationConfirmation.bind(authController)
 );
 
 router.post(
   "/registration",
   getApiLimiter(),
   [...validateRegistration, sendErrorsIfThereAreAny],
-  async (req: Request, res: Response) => {
-    // eslint-disable-next-line @typescript-eslint/no-shadow
-    const { login, password, email } = req.body;
-
-    const result = await authBusinessLogicLayer.registration(
-      email,
-      password,
-      login
-    );
-
-    if (!result?.isSuccessful) {
-      return res.status(400).send({
-        errorsMessages: [
-          {
-            message: "User exists",
-            field: result?.type,
-          },
-        ],
-      });
-    }
-
-    return res.sendStatus(204);
-  }
+  authController.registration.bind(authController)
 );
 
 router.post(
   "/registration-email-resending",
   [getApiLimiter(), validateEmailOnly, sendErrorsIfThereAreAny],
-  async (req: Request, res: Response) => {
-    const { email } = req.body;
-
-    const isResent = await authBusinessLogicLayer.registrationEmailResending(
-      email
-    );
-
-    if (!isResent) {
-      return res.status(400).send({
-        errorsMessages: [
-          {
-            message: "has incorrect values or if email is already confirmed",
-            field: "email",
-          },
-        ],
-      });
-    }
-
-    return res.sendStatus(204);
-  }
+  authController.registrationEmailResending.bind(authController)
 );
 
-router.post("/logout", async (req: Request, res: Response) => {
-  const result = await authBusinessLogicLayer.logout(req.cookies);
-
-  if (result) {
-    res.cookie("refreshToken", "", {
-      httpOnly: true,
-      secure: true,
-    });
-    return res.sendStatus(204);
-  }
-  return res.sendStatus(401);
-});
+router.post("/logout", authController.logout.bind(authController));
 
 export default router;

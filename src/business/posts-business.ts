@@ -1,51 +1,50 @@
-import { v4 as uuidv4 } from "uuid";
-import { postsDataAccessLayer } from "../repositories/posts-repo";
+/* eslint-disable class-methods-use-this */
+
+import { PostsRepository } from "../repositories/posts-repo";
 import { InputAddPost } from "../types/types";
 
 // CUD only
-export const postsBusinessLogicLayer = {
+export class PostsBusiness {
+  constructor(protected postsRepository: PostsRepository) {}
+
   async createNewComment(
     postId: string,
     content: string,
     userId: string,
     userLogin: string
   ) {
-    const newComment = {
-      id: uuidv4(),
+    const result = await this.postsRepository.findOneAndUpdateComment(
+      postId,
       content,
       userLogin,
-      userId,
-      createdAt: new Date(),
-    };
-
-    const result = await postsDataAccessLayer.findOneAndUpdateComment(
-      postId,
-      newComment
+      userId
     );
 
     if (result) {
       return result.comments?.[result.comments.length - 1];
     }
     return false;
-  },
+  }
 
   async deleteById(id: string) {
-    const result = await postsDataAccessLayer.deleteById(id);
+    const result = await this.postsRepository.deleteById(id);
 
     if (result && result.deletedCount === 0) {
       return false;
     }
     return true;
-  },
+  }
+
   async updatePost(post: InputAddPost, id: string) {
-    const result = await postsDataAccessLayer.updatePost(post, id);
+    const result = await this.postsRepository.updatePost(post, id);
 
     if (result && result.matchedCount === 1) {
       return true;
     }
 
     return false;
-  },
+  }
+
   async addPost(post: InputAddPost, blogName: string) {
     const newPost = {
       ...post,
@@ -53,14 +52,14 @@ export const postsBusinessLogicLayer = {
       comments: [],
     };
 
-    const result = await postsDataAccessLayer.addPost(newPost);
+    const result = await this.postsRepository.addPost(newPost);
 
     if (result) {
       return result;
     }
 
     return null;
-  },
-};
+  }
+}
 
-export default postsBusinessLogicLayer;
+export default PostsBusiness;
