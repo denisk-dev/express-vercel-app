@@ -12,7 +12,11 @@ import {
 // TODO remove all of the todos in code
 const router = Router();
 
-router.get("/:id", commentsController.getCommentById.bind(commentsController));
+router.get(
+  "/:id",
+  [auth],
+  commentsController.getCommentById.bind(commentsController)
+);
 
 router.put(
   "/:commentId",

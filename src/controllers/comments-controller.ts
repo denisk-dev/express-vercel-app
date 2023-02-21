@@ -53,7 +53,7 @@ export class CommentsController {
   async getCommentById(req: Request, res: Response) {
     const { id } = req.params;
 
-    // console.log("i am here");
+    const { user } = req.context;
 
     const result = await this.queryRepository.getCommentById(id);
 
@@ -64,8 +64,6 @@ export class CommentsController {
     }
 
     const comment = result?.[0].comments;
-
-    console.log(comment, "comment");
 
     const totalLikes = comment.likes.filter(
       (lik: any) => lik.status === "Like"

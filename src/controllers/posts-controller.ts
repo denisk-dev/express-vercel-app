@@ -87,8 +87,8 @@ export class PostsController {
         },
         createdAt: result.createdAt,
         likesInfo: {
-          likesCount: totalLikes,
-          dislikesCount: totalDislikes,
+          likesCount: totalLikes.length,
+          dislikesCount: totalDislikes.length,
           myStatus: myStatus.length === 0 ? "None" : myStatus[0].status,
         },
       });
