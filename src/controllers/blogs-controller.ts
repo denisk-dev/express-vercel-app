@@ -1,3 +1,4 @@
+/* eslint-disable no-underscore-dangle */
 import { Request, Response } from "express";
 import { isValidObjectId } from "mongoose";
 import { BlogsRepository } from "../repositories/blogs-repo";
@@ -68,7 +69,7 @@ export class BlogsController {
       const blog = await this.blogsRepository.getByMongoId(newlyAddedId);
 
       if (blog) {
-        return res.status(201).send(blog);
+        return res.status(201).send({ id: blog._id, ...blog, _id: undefined });
       }
       return res.sendStatus(500);
     }

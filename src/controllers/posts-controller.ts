@@ -67,6 +67,17 @@ export class PostsController {
     );
 
     if (result) {
+      const totalLikes = result.likes.filter(
+        (lik: any) => lik.status === "Like"
+      );
+      const totalDislikes = result.likes.filter(
+        (lik: any) => lik.status === "Dislike"
+      );
+
+      const myStatus = result.likes.filter(
+        (lik: any) => lik.userId === user._id?.toString()
+      );
+
       return res.status(201).send({
         id: result.id,
         content: result.content,
@@ -75,6 +86,11 @@ export class PostsController {
           userLogin: result.commentatorInfo.userLogin,
         },
         createdAt: result.createdAt,
+        likesInfo: {
+          likesCount: totalLikes,
+          dislikesCount: totalDislikes,
+          myStatus: myStatus.length === 0 ? "None" : myStatus[0].status,
+        },
       });
     }
 
@@ -133,7 +149,9 @@ export class PostsController {
       );
 
       if (newlyAdded) {
-        res.status(201).send(newlyAdded);
+        res
+          .status(201)
+          .send({ id: newlyAdded._id, ...newlyAdded.toJSON(), _id: undefined });
       }
     } else {
       res.status(400).send({
