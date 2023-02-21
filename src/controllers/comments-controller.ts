@@ -53,8 +53,6 @@ export class CommentsController {
   async getCommentById(req: Request, res: Response) {
     const { id } = req.params;
 
-    const { user } = req.context;
-
     const result = await this.queryRepository.getCommentById(id);
 
     // console.log(result, "result");
