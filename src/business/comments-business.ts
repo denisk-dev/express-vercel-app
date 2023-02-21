@@ -60,9 +60,8 @@ export class CommentsBusiness {
       });
     }
 
-    const updatedDoc = await doc.save();
+    await doc.save();
 
-    console.log(updatedDoc, "updatedDoc");
     return true;
   }
 
